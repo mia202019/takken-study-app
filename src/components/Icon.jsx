@@ -22,6 +22,7 @@ const PATHS = {
   bell: <><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6z"/><path d="M10 20a2 2 0 0 0 4 0"/></>,
   sun: <><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8L6 18M18 6l1.8-1.8"/></>,
   spark: <><path d="M12 3v6M12 15v6M3 12h6M15 12h6"/><path d="M12 9l1.5 1.5L12 12l-1.5-1.5z" fill="currentColor" stroke="none"/></>,
+  help: <><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 .5c0 1.5-2.5 2.5-2.5 4"/><circle cx="12" cy="17.5" r=".75" fill="currentColor" stroke="none"/></>,
 };
 
 export default function Icon({ name, size = 20, stroke = 1.7, style = {} }) {

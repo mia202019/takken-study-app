@@ -14,6 +14,7 @@ import MaterialPage from './MaterialPage';
 import ResourcePage from './ResourcePage';
 import AnalysisPage from './AnalysisPage';
 import SettingsPage from './SettingsPage';
+import HelpPage from './HelpPage';
 import { loadMistakeLogs, computeMistakeStats } from '../data/mistakeData';
 import { loadMaterialUnits, computeMaterialStats } from '../data/materialData';
 import { loadResources, computeResourceStats } from '../data/resourceData';
@@ -878,6 +879,7 @@ export default function Home() {
     if (pageId === 'analysis')  return <AnalysisPage />;
     if (pageId === 'library')   return <ResourcePage />;
     if (pageId === 'settings')  return <SettingsPage />;
+    if (pageId === 'help')      return <HelpPage />;
     return <ComingSoon title={NAV.find(n => n.id === pageId)?.label || ''} />;
   }
 

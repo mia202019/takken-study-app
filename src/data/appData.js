@@ -21,6 +21,7 @@ export const NAV = [
   { id: 'material', label: '教材',     icon: 'book' },
   { id: 'library',  label: 'リソース', icon: 'library' },
   { id: 'settings', label: '設定',     icon: 'settings' },
+  { id: 'help',     label: 'ガイド',   icon: 'help' },
 ];
 
 export const NAV_PRIMARY = ['home', 'map', 'review', 'mistake'];

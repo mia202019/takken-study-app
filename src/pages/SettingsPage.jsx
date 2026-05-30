@@ -327,14 +327,41 @@ function ScheduleSection() {
 
       {/* 生成ボタン */}
       {state !== 'error' ? (
-        <button
-          onClick={handleGenerate}
-          className="tk-btn-primary"
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '11px 18px', alignSelf: 'flex-start' }}
-        >
-          <Icon name="map" size={16} stroke={1.8} />
-          {state === 'done' ? '生成完了 ✓' : meta ? 'スケジュールを再生成する' : '学習タスクを生成する'}
-        </button>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
+          {/* STEP① 吹き出し — スケジュール未生成時のみ */}
+          {!meta && state !== 'done' && (
+            <div style={{ position: 'relative' }}>
+              <div style={{
+                background: 'var(--accent)', color: '#fff',
+                borderRadius: 10, padding: '8px 16px',
+                fontSize: 12.5, fontWeight: 700, lineHeight: 1.5,
+                display: 'flex', alignItems: 'center', gap: 8,
+              }}>
+                <span style={{
+                  background: '#fff', color: 'var(--accent)',
+                  borderRadius: 20, padding: '1px 8px',
+                  fontSize: 11, fontWeight: 800, flexShrink: 0,
+                }}>STEP①</span>
+                ここでスケジュールを生成しよう
+              </div>
+              <div style={{
+                position: 'absolute', bottom: -8, left: 24,
+                width: 0, height: 0,
+                borderLeft: '8px solid transparent',
+                borderRight: '8px solid transparent',
+                borderTop: '8px solid var(--accent)',
+              }} />
+            </div>
+          )}
+          <button
+            onClick={handleGenerate}
+            className="tk-btn-primary"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '11px 18px' }}
+          >
+            <Icon name="map" size={16} stroke={1.8} />
+            {state === 'done' ? '生成完了 ✓' : meta ? 'スケジュールを再生成する' : '学習タスクを生成する'}
+          </button>
+        </div>
       ) : (
         <div style={{ padding: '13px 14px', background: 'var(--warn-bg)', borderRadius: 10 }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--warn)', marginBottom: 5 }}>生成エラー</div>

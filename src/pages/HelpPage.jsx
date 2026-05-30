@@ -144,10 +144,10 @@ export default function HelpPage() {
         </div>
         <div style={{ ...card, display: 'flex', flexDirection: 'column', gap: 12 }}>
           {[
-            { step: '1', label: 'スケジュールを生成する', desc: '設定 →「学習スケジュール」→「6/1〜試験日までの学習タスクを生成」を押す。6月から本試験日まで毎日のタスクが自動で作成されます。' },
+            { step: '1', label: 'スケジュールを生成する', desc: '設定 →「学習スケジュール」で開始日を選んで「スケジュールを生成する」を押す。設定した開始日〜本試験日（10/18）まで毎日のタスクが自動で作成されます。' },
             { step: '2', label: 'ホームで今日のタスクをこなす', desc: 'ホームページに今日やるべきタスクが一覧で表示されます。終わったら○をタップして完了にしましょう。' },
             { step: '3', label: '間違えた問題をミスに記録する', desc: '解いていて間違えた問題や曖昧な箇所は「ミス」ページに記録。間違いノートとして活用できます。' },
-            { step: '4', label: 'クラウド同期でどこでも続ける', desc: '設定 →「クラウド同期」→「Googleでログイン」。スマホ・PCで同じデータを自動共有できます。' },
+            { step: '4', label: 'クラウド同期でどこでも続ける', desc: 'アプリ起動時のログイン画面で「Googleでログイン」。ログイン後はデータがクラウドに自動保存・同期され、スマホ・PCで同じデータを利用できます。' },
           ].map(({ step, label, desc }) => (
             <div key={step} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
               <div style={{
@@ -236,7 +236,7 @@ export default function HelpPage() {
               <Icon name="book" size={17} stroke={1.8} style={{ color: '#0ea5e9' }} />
               教材
             </div>
-            <div style={featureDesc}>テキスト・問題集などの学習進捗（ページ数・単元）を記録・管理します。</div>
+            <div style={featureDesc}>テキスト・問題集などの学習教材を登録し、単元別の進捗を記録・管理します。教材をタップして展開すると単元一覧が表示されます。</div>
           </div>
 
           <div style={featureCard('#64748b')}>
@@ -258,8 +258,8 @@ export default function HelpPage() {
         </div>
         <div style={{ ...card, display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div style={{ fontSize: 13, color: 'var(--ink-2)', lineHeight: 1.75 }}>
-            設定ページから2026年6月〜10月18日（本試験日）の毎日のタスクを一括生成できます。
-            フェーズごとに学習内容が自動で切り替わります。
+            設定ページから学習開始日〜10月18日（本試験日）までの毎日のタスクを一括生成できます。
+            開始日は自由に設定でき、フェーズごとに学習内容が自動で切り替わります。
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {[
@@ -295,7 +295,7 @@ export default function HelpPage() {
         </div>
         <div style={{ ...card, display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ fontSize: 13, color: 'var(--ink-2)', lineHeight: 1.75 }}>
-            設定ページ →「クラウド同期」→「Googleでログイン」で有効になります。
+            アプリ起動時のログイン画面で「Googleでログイン」を押すことで有効になります。
             ログイン後はデータの保存・読み込みが自動で行われます。
           </div>
 
@@ -355,7 +355,7 @@ export default function HelpPage() {
             },
             {
               q: 'スマホとPCでデータを共有したい',
-              a: '設定ページ →「クラウド同期」→「Googleでログイン」を両方の端末で行ってください。同じGoogleアカウントでログインするだけで、データが自動的に同期されます。',
+              a: '両方の端末でアプリを開き、ログイン画面から同じGoogleアカウントでログインしてください。ログインするだけでデータが自動的に同期されます。',
             },
             {
               q: 'タスクを間違えて完了にしてしまった',
@@ -368,6 +368,10 @@ export default function HelpPage() {
             {
               q: 'アプリをスマホのホーム画面に追加したい',
               a: 'Safariでアプリを開き、画面下の共有ボタン（□↑）→「ホーム画面に追加」をタップしてください。アプリのように使えるようになります（Android の場合はメニュー →「ホーム画面に追加」）。',
+            },
+            {
+              q: 'データをすべてリセットしたい',
+              a: '設定ページ → 最下部の「データリセット」から行えます。2段階の確認ダイアログで誤操作を防ぐ仕組みになっています。リセットすると全データが削除され、クラウド同期中の場合はクラウド側のデータも同時に消去されます。',
             },
             {
               q: 'JSONバックアップを復元するには？',

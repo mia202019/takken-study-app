@@ -27,6 +27,31 @@ import {
 const TODAY = new Date();
 const TODAY_STR = `${TODAY.getFullYear()}-${String(TODAY.getMonth() + 1).padStart(2, '0')}-${String(TODAY.getDate()).padStart(2, '0')}`;
 
+// ── App Icon — design 02: Shippori Mincho 宅 on deep navy ────────
+function AppIcon({ size = 64 }) {
+  const r = Math.round(size * 0.2237);
+  return (
+    <div style={{
+      width: size, height: size,
+      borderRadius: r,
+      background: 'oklch(0.39 0.072 256)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      flexShrink: 0,
+    }}>
+      <span style={{
+        fontFamily: "'Shippori Mincho B1', serif",
+        fontWeight: 800,
+        fontSize: size * 0.60,
+        color: '#fffdf9',
+        lineHeight: 1,
+        display: 'block',
+        marginTop: size * 0.005,
+        userSelect: 'none',
+      }}>宅</span>
+    </div>
+  );
+}
+
 // ── Helpers ──────────────────────────────────────────────────────
 
 function tagBase(size = 'sm') {
@@ -391,20 +416,48 @@ function TodayStudy({ tasks, onToggle, onGoSettings, hasSchedule, nextDate }) {
 
       {tasks.length === 0 && !hasSchedule && (
         /* ① スケジュール未生成 */
-        <div style={{ textAlign: 'center', padding: '16px 8px 8px' }}>
+        <div style={{ textAlign: 'center', padding: '12px 8px 8px' }}>
           <Icon name="note" size={32} stroke={1.3} style={{ color: 'var(--ink-4)', display: 'block', margin: '0 auto 10px' }} />
           <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink-2)', marginBottom: 6 }}>
             学習スケジュールが未設定です
           </div>
-          <div style={{ fontSize: 12.5, color: 'var(--ink-3)', lineHeight: 1.7, marginBottom: 14 }}>
+          <div style={{ fontSize: 12.5, color: 'var(--ink-3)', lineHeight: 1.7, marginBottom: 18 }}>
             設定画面でスケジュールを生成すると<br />今日のタスクがここに表示されます
           </div>
+
+          {/* STEP① 吹き出し */}
+          <div style={{ position: 'relative', display: 'inline-block', marginBottom: 10 }}>
+            <div style={{
+              background: 'var(--accent)', color: '#fff',
+              borderRadius: 10, padding: '8px 16px',
+              fontSize: 12.5, fontWeight: 700, lineHeight: 1.5,
+              display: 'flex', alignItems: 'center', gap: 8,
+            }}>
+              <span style={{
+                background: '#fff', color: 'var(--accent)',
+                borderRadius: 20, padding: '1px 8px',
+                fontSize: 11, fontWeight: 800, flexShrink: 0,
+              }}>STEP①</span>
+              まずはスケジュールを設定しよう
+            </div>
+            {/* 吹き出しの三角（下向き） */}
+            <div style={{
+              position: 'absolute', bottom: -8, left: '50%', transform: 'translateX(-50%)',
+              width: 0, height: 0,
+              borderLeft: '8px solid transparent',
+              borderRight: '8px solid transparent',
+              borderTop: '8px solid var(--accent)',
+            }} />
+          </div>
+
+          <div style={{ height: 8 }} />
           <button
             onClick={onGoSettings}
             style={{
-              padding: '9px 20px', borderRadius: 10, border: 'none', cursor: 'pointer',
-              background: 'var(--accent)', color: '#fff',
+              padding: '10px 22px', borderRadius: 10, border: '2px solid var(--accent)', cursor: 'pointer',
+              background: '#fff', color: 'var(--accent)',
               fontSize: 13, fontWeight: 700, fontFamily: 'inherit',
+              boxShadow: '0 2px 8px rgba(0,0,0,.08)',
             }}
           >
             スケジュールを設定する →
@@ -717,11 +770,7 @@ function Sidebar({ active, onNav }) {
       display: 'flex', flexDirection: 'column', padding: '20px 14px',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 6px 20px' }}>
-        <span style={{
-          width: 34, height: 34, borderRadius: 10, background: 'var(--accent)', color: '#fff',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontWeight: 700, fontSize: 15, letterSpacing: '.02em',
-        }}>宅</span>
+        <AppIcon size={34} />
         <div>
           <div style={{ fontSize: 13.5, fontWeight: 700, lineHeight: 1.2 }}>宅建 学習管理</div>
           <div style={{ fontSize: 10.5, color: 'var(--ink-3)' }}>2026年度 受験</div>
@@ -889,11 +938,11 @@ function LoginScreen() {
         {/* ロゴ・タイトル */}
         <div style={{ textAlign: 'center', marginBottom: 8 }}>
           <div style={{
-            width: 64, height: 64, borderRadius: 18, background: 'var(--accent)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            margin: '0 auto 14px',
+            margin: '0 auto 14px', width: 'fit-content',
+            boxShadow: '0 8px 22px rgba(45,42,37,.18), 0 1.5px 4px rgba(45,42,37,.10)',
+            borderRadius: Math.round(64 * 0.2237),
           }}>
-            <Icon name="book" size={30} stroke={1.6} style={{ color: '#fff' }} />
+            <AppIcon size={64} />
           </div>
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: 'var(--ink-1)' }}>宅建 学習管理</h1>
           <p style={{ margin: '6px 0 0', fontSize: 13, color: 'var(--ink-3)' }}>2026年度 宅地建物取引士試験</p>
@@ -1056,12 +1105,9 @@ function AuthedApp() {
     return () => window.removeEventListener('resize', handler);
   }, []);
 
-  // Google ログイン完了時：スケジュール未設定なら設定ページ、設定済みならホームへ
+  // Google ログイン完了時：常にホームへ
   useEffect(() => {
-    const handler = () => {
-      const hasExistingSchedule = loadScheduledTasks().length > 0;
-      setActive(hasExistingSchedule ? 'home' : 'settings');
-    };
+    const handler = () => setActive('home');
     window.addEventListener('takken-signed-in', handler);
     return () => window.removeEventListener('takken-signed-in', handler);
   }, []);

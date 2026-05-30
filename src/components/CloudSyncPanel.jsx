@@ -148,11 +148,7 @@ function InAppBrowserWarning() {
 // ── Main Component ────────────────────────────────────────────────
 
 export default function CloudSyncPanel() {
-  const { user, configured, saveStatus, autoLoaded, signInWithGoogle, signOut, manualSave, manualLoad } = useCloudSync();
-  const [loadConfirm, setLoadConfirm] = useState(false);
-  const [saveConfirm, setSaveConfirm] = useState(false);
-  const [opResult,    setOpResult]    = useState(null); // { ok, msg }
-  const [busy,        setBusy]        = useState(false);
+  const { user, configured, saveStatus, autoLoaded, signInWithGoogle, signOut } = useCloudSync();
   const [loginError,  setLoginError]  = useState(null);
 
   // ── 未設定 ───────────────────────────────────────────────────
@@ -171,22 +167,6 @@ export default function CloudSyncPanel() {
       </section>
     );
   }
-
-  // ── 共通オペレーション ────────────────────────────────────────
-
-  const doSave = async () => {
-    setBusy(true); setOpResult(null);
-    const { error } = await manualSave();
-    setOpResult(error ? { ok: false, msg: `保存失敗：${error.message}` } : { ok: true, msg: 'クラウドに保存しました' });
-    setBusy(false);
-  };
-
-  const doLoad = async () => {
-    setBusy(true); setOpResult(null);
-    const { error } = await manualLoad();
-    setOpResult(error ? { ok: false, msg: `読み込み失敗：${error.message}` } : { ok: true, msg: 'クラウドから読み込みました' });
-    setBusy(false);
-  };
 
   // ── ステータスバッジ ─────────────────────────────────────────
   const sc = statusColors[saveStatus];
@@ -240,16 +220,16 @@ export default function CloudSyncPanel() {
   // ── ログイン後 ────────────────────────────────────────────────
   return (
     <section>
-      <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 12 }}>クラウド同期</h2>
+      <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 12 }}>アカウント</h2>
       <div style={card}>
-        {/* ユーザー情報 + ステータス */}
+        {/* ユーザー情報 */}
         <div style={row}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {user.user_metadata?.avatar_url && (
               <img
                 src={user.user_metadata.avatar_url}
                 alt="avatar"
-                style={{ width: 32, height: 32, borderRadius: '50%', objectFit: 'cover' }}
+                style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover' }}
               />
             )}
             <div>
@@ -265,10 +245,11 @@ export default function CloudSyncPanel() {
           </div>
         </div>
 
-        <p style={{ margin: 0, fontSize: 12, color: 'var(--text-secondary)' }}>
-          学習データはバックグラウンドで自動保存・自動読み込みされます。<br />
-          アプリを開くたびに他の端末の最新データが自動で反映されます。
+        <p style={{ margin: 0, fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
+          学習データは自動でクラウドに保存・同期されます。<br />
+          別の端末でログインすると最新データが自動で反映されます。
         </p>
+
         {autoLoaded && (
           <p style={{
             margin: 0, fontSize: 13, padding: '8px 12px', borderRadius: 8,
@@ -277,46 +258,8 @@ export default function CloudSyncPanel() {
             📱 他の端末のデータを自動で読み込みました ✓
           </p>
         )}
-
-        {/* 操作ボタン */}
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          <button style={btn('primary', busy)} disabled={busy} onClick={() => setSaveConfirm(true)}>
-            今すぐ保存
-          </button>
-          <button style={btn('outline', busy)} disabled={busy} onClick={() => setLoadConfirm(true)}>
-            クラウドから読み込む
-          </button>
-        </div>
-
-        {/* 操作結果 */}
-        {opResult && (
-          <p style={{
-            margin: 0, fontSize: 13, padding: '8px 12px', borderRadius: 8,
-            background: opResult.ok ? '#f0fff4' : '#fff5f5',
-            color: opResult.ok ? '#276749' : '#c53030',
-          }}>
-            {opResult.msg}
-          </p>
-        )}
       </div>
 
-      {/* 確認ダイアログ：保存 */}
-      {saveConfirm && (
-        <ConfirmDialog
-          message="現在の学習データをクラウドに上書き保存します。クラウド側の古いデータは削除されます。続けますか？"
-          onOk={() => { setSaveConfirm(false); doSave(); }}
-          onCancel={() => setSaveConfirm(false)}
-        />
-      )}
-
-      {/* 確認ダイアログ：読み込み */}
-      {loadConfirm && (
-        <ConfirmDialog
-          message="クラウドのデータをこの端末に読み込みます。この端末の現在のデータは上書きされます。続けますか？"
-          onOk={() => { setLoadConfirm(false); doLoad(); }}
-          onCancel={() => setLoadConfirm(false)}
-        />
-      )}
     </section>
   );
 }

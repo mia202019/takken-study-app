@@ -77,7 +77,7 @@ function ConfirmDialog({ message, onOk, onCancel }) {
 // ── Main Component ────────────────────────────────────────────────
 
 export default function CloudSyncPanel() {
-  const { user, configured, saveStatus, signInWithGoogle, signOut, manualSave, manualLoad } = useCloudSync();
+  const { user, configured, saveStatus, autoLoaded, signInWithGoogle, signOut, manualSave, manualLoad } = useCloudSync();
   const [loadConfirm, setLoadConfirm] = useState(false);
   const [saveConfirm, setSaveConfirm] = useState(false);
   const [opResult,    setOpResult]    = useState(null); // { ok, msg }
@@ -188,8 +188,17 @@ export default function CloudSyncPanel() {
         </div>
 
         <p style={{ margin: 0, fontSize: 12, color: 'var(--text-secondary)' }}>
-          学習データはバックグラウンドで自動保存されます（変更から約 2.5 秒後）。
+          学習データはバックグラウンドで自動保存・自動読み込みされます。<br />
+          アプリを開くたびに他の端末の最新データが自動で反映されます。
         </p>
+        {autoLoaded && (
+          <p style={{
+            margin: 0, fontSize: 13, padding: '8px 12px', borderRadius: 8,
+            background: '#f0fff4', color: '#276749',
+          }}>
+            📱 他の端末のデータを自動で読み込みました ✓
+          </p>
+        )}
 
         {/* 操作ボタン */}
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>

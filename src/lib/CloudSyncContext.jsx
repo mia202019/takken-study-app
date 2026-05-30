@@ -1,10 +1,12 @@
-// CloudSyncContext.jsx — Google Auth + debounce auto-save
+// CloudSyncContext.jsx — Google Auth + debounce auto-save + auto-load on focus
 import { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { supabase, isSupabaseConfigured } from './supabaseClient';
-import { saveToCloud, loadFromCloud, restoreLocalStorage } from '../data/cloudSyncData';
+import { saveToCloud, loadFromCloud, restoreLocalStorage, getCloudUpdatedAt } from '../data/cloudSyncData';
 
-const DEBOUNCE_MS = 2500;          // 2.5 秒デバウンス
-const LS_PREFIX   = 'takken-';
+const DEBOUNCE_MS    = 2500;   // 自動保存デバウンス（ms）
+const LS_PREFIX      = 'takken-';
+// クラウド同期タイムスタンプ（このキーは 'takken-' で始まらないので同期対象外）
+const LS_SYNC_TS_KEY = '_takken_last_cloud_ts';
 
 // ── Context ──────────────────────────────────────────────────────
 
@@ -17,18 +19,18 @@ export function useCloudSync() {
 // ── Provider ─────────────────────────────────────────────────────
 
 export function CloudSyncProvider({ children }) {
-  const [user,       setUser]       = useState(null);   // Supabase User | null
-  const [saveStatus, setSaveStatus] = useState('idle'); // 'idle' | 'saving' | 'saved' | 'error'
-  const [configured, setConfigured] = useState(false);
-  const debounceRef = useRef(null);
-  const saveErrRef  = useRef(null);
+  const [user,        setUser]        = useState(null);
+  const [saveStatus,  setSaveStatus]  = useState('idle'); // 'idle'|'saving'|'saved'|'error'
+  const [autoLoaded,  setAutoLoaded]  = useState(false);  // 自動読み込み通知
+  const [configured,  setConfigured]  = useState(false);
+  const debounceRef  = useRef(null);
+  const checkingRef  = useRef(false);  // 重複チェック防止
 
   // ── 初期化：セッション取得 + AuthState 監視 ───────────────────
   useEffect(() => {
     if (!isSupabaseConfigured()) { setConfigured(false); return; }
     setConfigured(true);
 
-    // getSession() で現在のセッションを取得（URLのcode/tokenも自動処理される）
     supabase.auth.getSession().then(({ data }) => {
       setUser(data.session?.user ?? null);
     });
@@ -49,20 +51,20 @@ export function CloudSyncProvider({ children }) {
     debounceRef.current = setTimeout(async () => {
       const { error } = await saveToCloud(userId);
       if (error) {
-        saveErrRef.current = error;
         setSaveStatus('error');
       } else {
+        // 保存成功 → タイムスタンプ記録
+        localStorage.setItem(LS_SYNC_TS_KEY, new Date().toISOString());
         setSaveStatus('saved');
         setTimeout(() => setSaveStatus('idle'), 3000);
       }
     }, DEBOUNCE_MS);
   }, []);
 
-  // localStorage 変更を監視（same-tab も storageEvent で通知される）
+  // localStorage 変更を監視して auto-save
   useEffect(() => {
     if (!user) return;
     const handler = (e) => {
-      // null key = 全消去、or takken- キーの変更
       if (e.key === null || (e.key && e.key.startsWith(LS_PREFIX))) {
         triggerAutoSave(user.id);
       }
@@ -74,44 +76,82 @@ export function CloudSyncProvider({ children }) {
     };
   }, [user, triggerAutoSave]);
 
+  // ── 画面がアクティブになったとき自動読み込み ─────────────────
+  const checkAndAutoLoad = useCallback(async (userId) => {
+    if (checkingRef.current) return;
+    checkingRef.current = true;
+    try {
+      const { updatedAt } = await getCloudUpdatedAt(userId);
+      if (!updatedAt) return;
+
+      const localTs = localStorage.getItem(LS_SYNC_TS_KEY) || '';
+      // クラウドが新しい場合のみ自動読み込み
+      if (updatedAt > localTs) {
+        const { data, error } = await loadFromCloud(userId);
+        if (!error && data) {
+          restoreLocalStorage(data);
+          localStorage.setItem(LS_SYNC_TS_KEY, updatedAt);
+          setAutoLoaded(true);
+          setTimeout(() => setAutoLoaded(false), 4000);
+        }
+      }
+    } finally {
+      checkingRef.current = false;
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+
+    // ログイン直後に一度チェック
+    checkAndAutoLoad(user.id);
+
+    // ページがフォアグラウンドに戻ったときにチェック
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        checkAndAutoLoad(user.id);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [user, checkAndAutoLoad]);
+
   // ── 公開 API ─────────────────────────────────────────────────
 
-  /** Google OAuth ログイン */
   const signInWithGoogle = useCallback(async () => {
     if (!supabase) return { error: new Error('Supabase not configured') };
-    const redirectTo = window.location.origin;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo },
+      options: { redirectTo: window.location.origin },
     });
     return { error: error || null };
   }, []);
 
-  /** ログアウト */
   const signOut = useCallback(async () => {
     if (!supabase) return;
+    localStorage.removeItem(LS_SYNC_TS_KEY);
     await supabase.auth.signOut();
   }, []);
 
-  /** 手動クラウド保存 */
   const manualSave = useCallback(async () => {
     if (!user) return { error: new Error('Not logged in') };
     setSaveStatus('saving');
     const { error } = await saveToCloud(user.id);
     if (error) { setSaveStatus('error'); return { error }; }
+    localStorage.setItem(LS_SYNC_TS_KEY, new Date().toISOString());
     setSaveStatus('saved');
     setTimeout(() => setSaveStatus('idle'), 3000);
     return { error: null };
   }, [user]);
 
-  /** 手動クラウドから読み込み（既存データを上書き） */
   const manualLoad = useCallback(async () => {
     if (!user) return { error: new Error('Not logged in') };
-    const { data, error } = await loadFromCloud(user.id);
+    const { data, updatedAt, error } = await loadFromCloud(user.id);
     if (error) return { error };
     if (!data) return { error: new Error('クラウドにデータが見つかりません') };
     try {
       restoreLocalStorage(data);
+      if (updatedAt) localStorage.setItem(LS_SYNC_TS_KEY, updatedAt);
       return { error: null };
     } catch (err) {
       return { error: err };
@@ -122,6 +162,7 @@ export function CloudSyncProvider({ children }) {
     user,
     configured,
     saveStatus,
+    autoLoaded,
     signInWithGoogle,
     signOut,
     manualSave,

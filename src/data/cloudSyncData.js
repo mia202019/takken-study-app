@@ -59,16 +59,32 @@ export async function saveToCloud(userId) {
 
 /**
  * クラウドからデータを取得
- * @returns {{ data: object|null, error: Error|null }}
+ * @returns {{ data: object|null, updatedAt: string|null, error: Error|null }}
  */
 export async function loadFromCloud(userId) {
-  if (!supabase) return { data: null, error: new Error('Supabase not configured') };
+  if (!supabase) return { data: null, updatedAt: null, error: new Error('Supabase not configured') };
   const { data, error } = await supabase
     .from('user_app_data')
     .select('app_data, updated_at')
     .eq('user_id', userId)
     .eq('app_name', APP_NAME)
     .maybeSingle();
-  if (error) return { data: null, error };
-  return { data: data?.app_data || null, error: null };
+  if (error) return { data: null, updatedAt: null, error };
+  return { data: data?.app_data || null, updatedAt: data?.updated_at || null, error: null };
+}
+
+/**
+ * クラウドの updated_at だけ取得（差分チェック用・軽量）
+ * @returns {{ updatedAt: string|null, error: Error|null }}
+ */
+export async function getCloudUpdatedAt(userId) {
+  if (!supabase) return { updatedAt: null, error: new Error('Supabase not configured') };
+  const { data, error } = await supabase
+    .from('user_app_data')
+    .select('updated_at')
+    .eq('user_id', userId)
+    .eq('app_name', APP_NAME)
+    .maybeSingle();
+  if (error) return { updatedAt: null, error };
+  return { updatedAt: data?.updated_at || null, error: null };
 }

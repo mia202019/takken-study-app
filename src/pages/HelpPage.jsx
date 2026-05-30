@@ -316,6 +316,11 @@ export default function HelpPage() {
                 title: 'マルチデバイス対応',
                 desc: 'スマホ・PC・タブレットで同じGoogleアカウントでログインするだけでデータが同期されます。',
               },
+              {
+                icon: 'settings', color: '#64748b',
+                title: 'アカウントごとにデータ分離',
+                desc: '同じデバイスでも、Googleアカウントを切り替えるとそれぞれのデータに自動で差し替わります。',
+              },
             ].map(({ icon, color, title, desc }) => (
               <div key={title} style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                 <Icon name={icon} size={18} stroke={1.8} style={{ color, flexShrink: 0, marginTop: 2 }} />
@@ -371,6 +376,10 @@ export default function HelpPage() {
             {
               q: 'クラウド同期とJSONバックアップの違いは？',
               a: 'クラウド同期はGoogleログイン後に自動で行われ、複数端末での利用に適しています。JSONバックアップは手動でファイルを書き出す方法で、ローカルに保存できるので万一の保険として活用できます。両方使うのが理想的です。',
+            },
+            {
+              q: '同じデバイスで別のGoogleアカウントに切り替えたらどうなりますか？',
+              a: 'アカウントを切り替えると、前のアカウントのデータは削除され、新しいアカウントのクラウドデータが自動で読み込まれます。データはGoogleアカウントごとに完全に分離されているので、他のアカウントのデータが混ざることはありません。',
             },
           ].map((item, i) => (
             <FaqItem key={i} q={item.q} a={item.a} />

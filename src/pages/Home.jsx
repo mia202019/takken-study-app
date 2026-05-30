@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import Icon from '../components/Icon';
 import {
   CAT, TYPE, NAV, NAV_PRIMARY,
-  INITIAL_TASKS, FIXED_TASKS, EXAM,
+  FIXED_TASKS, EXAM,
   daysBetween, parseDate, fmtShort, fmtMD, weekday,
 } from '../data/appData';
 import { loadLevels, computeWeakTopics } from '../data/topicsData';
@@ -117,16 +117,13 @@ function useTasks() {
     return () => window.removeEventListener('storage', handler);
   }, []);
 
-  // 表示順: 持ち越し → サンプル（スケジュールなし時のみ）→ 通常
+  // 表示順: 持ち越し → 通常 → 手動追加
   const tasks = useMemo(() => {
-    const carried  = scheduledToday.filter(t => t.carriedOver);
-    const regular  = scheduledToday.filter(t => !t.carriedOver);
-    // スケジュール済みタスクがある日はサンプルタスクを非表示
-    const showSamples = scheduledToday.length === 0 && extraTasks.length === 0;
+    const carried = scheduledToday.filter(t => t.carriedOver);
+    const regular = scheduledToday.filter(t => !t.carriedOver);
     return [
-      ...carried.map(t  => ({ ...t, done: !!doneMap[t.id] })),
-      ...(showSamples ? INITIAL_TASKS.map(t => ({ ...t, done: !!doneMap[t.id] })) : []),
-      ...regular.map(t  => ({ ...t, done: !!doneMap[t.id] })),
+      ...carried.map(t => ({ ...t, done: !!doneMap[t.id] })),
+      ...regular.map(t => ({ ...t, done: !!doneMap[t.id] })),
       ...extraTasks.map(t => ({ ...t, done: !!doneMap[t.id] })),
     ];
   }, [doneMap, scheduledToday, extraTasks]);
@@ -355,12 +352,12 @@ function StatChip({ label, value, accent }) {
   );
 }
 
-function TodayStudy({ tasks, onToggle }) {
+function TodayStudy({ tasks, onToggle, onGoSettings }) {
   const done = tasks.filter(t => t.done).length;
   const remaining = tasks.filter(t => !t.done).reduce((a, t) => a + t.min, 0);
-  // 持ち越し（carriedOver）と固定 carry（INITIAL_TASKS t0 等）を先頭にまとめる
-  const carryTasks = tasks.filter(t => t.carriedOver || t.carry);
-  const normal     = tasks.filter(t => !t.carriedOver && !t.carry);
+  const carryTasks = tasks.filter(t => t.carriedOver);
+  const normal     = tasks.filter(t => !t.carriedOver);
+
   return (
     <div className="tk-card" style={{ borderTop: '3px solid var(--accent)' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
@@ -370,28 +367,56 @@ function TodayStudy({ tasks, onToggle }) {
             {fmtMD(TODAY)}（{weekday(TODAY)}）
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <StatChip label="目標" value={EXAM.todayGoalMin + '分'} />
-          <StatChip label="完了" value={`${done}/${tasks.length}`} accent />
-          <StatChip label="残り" value={remaining + '分'} />
-        </div>
-      </div>
-      {carryTasks.length > 0 && (
-        <div>
-          {carryTasks.map((t, i) => (
-            <div key={t.id} style={{ borderTop: i ? '1px solid var(--line)' : 'none' }}>
-              <TaskRow task={t} onToggle={onToggle} />
-            </div>
-          ))}
-        </div>
-      )}
-      <div style={{ borderTop: carryTasks.length ? '1px solid var(--line)' : 'none' }}>
-        {normal.map((t, i) => (
-          <div key={t.id} style={{ borderTop: i ? '1px solid var(--line)' : 'none' }}>
-            <TaskRow task={t} onToggle={onToggle} />
+        {tasks.length > 0 && (
+          <div style={{ display: 'flex', gap: 8 }}>
+            <StatChip label="目標" value={EXAM.todayGoalMin + '分'} />
+            <StatChip label="完了" value={`${done}/${tasks.length}`} accent />
+            <StatChip label="残り" value={remaining + '分'} />
           </div>
-        ))}
+        )}
       </div>
+
+      {tasks.length === 0 ? (
+        /* スケジュール未生成時の誘導 */
+        <div style={{ textAlign: 'center', padding: '16px 8px 8px' }}>
+          <Icon name="note" size={32} stroke={1.3} style={{ color: 'var(--ink-4)', display: 'block', margin: '0 auto 10px' }} />
+          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink-2)', marginBottom: 6 }}>
+            学習スケジュールが未設定です
+          </div>
+          <div style={{ fontSize: 12.5, color: 'var(--ink-3)', lineHeight: 1.7, marginBottom: 14 }}>
+            設定画面でスケジュールを生成すると<br />今日のタスクがここに表示されます
+          </div>
+          <button
+            onClick={onGoSettings}
+            style={{
+              padding: '9px 20px', borderRadius: 10, border: 'none', cursor: 'pointer',
+              background: 'var(--accent)', color: '#fff',
+              fontSize: 13, fontWeight: 700, fontFamily: 'inherit',
+            }}
+          >
+            スケジュールを設定する →
+          </button>
+        </div>
+      ) : (
+        <>
+          {carryTasks.length > 0 && (
+            <div>
+              {carryTasks.map((t, i) => (
+                <div key={t.id} style={{ borderTop: i ? '1px solid var(--line)' : 'none' }}>
+                  <TaskRow task={t} onToggle={onToggle} />
+                </div>
+              ))}
+            </div>
+          )}
+          <div style={{ borderTop: carryTasks.length ? '1px solid var(--line)' : 'none' }}>
+            {normal.map((t, i) => (
+              <div key={t.id} style={{ borderTop: i ? '1px solid var(--line)' : 'none' }}>
+                <TaskRow task={t} onToggle={onToggle} />
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -845,7 +870,7 @@ export default function Home() {
   // Mobile layout: TodayStudy first, then rest
   const mobileHomeContent = (
     <>
-      <TodayStudy tasks={tasks} onToggle={toggle} />
+      <TodayStudy tasks={tasks} onToggle={toggle} onGoSettings={() => setActive('settings')} />
       <Countdown desktop={false} />
       <ImportantTasks />
       <QuickAdd onOpen={handleOpenQuick} desktop={false} />
@@ -859,7 +884,7 @@ export default function Home() {
       <Countdown desktop />
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 20, alignItems: 'start' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <TodayStudy tasks={tasks} onToggle={toggle} />
+          <TodayStudy tasks={tasks} onToggle={toggle} onGoSettings={() => setActive('settings')} />
           <QuickAdd onOpen={handleOpenQuick} desktop />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>

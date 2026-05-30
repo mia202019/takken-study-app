@@ -20,7 +20,6 @@ export function CloudSyncProvider({ children }) {
   const [user,       setUser]       = useState(null);   // Supabase User | null
   const [saveStatus, setSaveStatus] = useState('idle'); // 'idle' | 'saving' | 'saved' | 'error'
   const [configured, setConfigured] = useState(false);
-  const [lastEvent,  setLastEvent]  = useState(null);   // デバッグ用
   const debounceRef = useRef(null);
   const saveErrRef  = useRef(null);
 
@@ -35,7 +34,6 @@ export function CloudSyncProvider({ children }) {
     });
 
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
-      setLastEvent(event);
       setUser(session?.user ?? null);
       if (event === 'SIGNED_IN') {
         window.dispatchEvent(new CustomEvent('takken-signed-in'));
@@ -124,7 +122,6 @@ export function CloudSyncProvider({ children }) {
     user,
     configured,
     saveStatus,
-    lastEvent,
     signInWithGoogle,
     signOut,
     manualSave,

@@ -821,13 +821,35 @@ function Toast({ msg }) {
 
 // ── Root ──────────────────────────────────────────────────────────
 
+const VALID_PAGES = new Set(['home','map','review','mistake','material','analysis','library','settings','help']);
+
+function pageFromHash() {
+  const hash = window.location.hash.replace('#', '');
+  return VALID_PAGES.has(hash) ? hash : 'home';
+}
+
 export default function Home() {
   const { tasks, toggle, addTask } = useTasks();
-  const [active, setActive] = useState('home');
+  const [active, setActive] = useState(pageFromHash);
   const [sheet, setSheet] = useState(null);
   const [more, setMore] = useState(false);
   const [toast, setToast] = useState(null);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+
+  // active が変わったらURLハッシュを更新
+  useEffect(() => {
+    const hash = active === 'home' ? '' : `#${active}`;
+    if (window.location.hash !== hash) {
+      window.history.replaceState(null, '', hash || window.location.pathname);
+    }
+  }, [active]);
+
+  // ブラウザの戻る/進むに対応
+  useEffect(() => {
+    const handler = () => setActive(pageFromHash());
+    window.addEventListener('popstate', handler);
+    return () => window.removeEventListener('popstate', handler);
+  }, []);
 
   useEffect(() => {
     const handler = () => setIsMobile(window.innerWidth < 768);

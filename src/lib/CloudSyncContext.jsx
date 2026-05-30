@@ -3,10 +3,11 @@ import { createContext, useContext, useEffect, useRef, useState, useCallback } f
 import { supabase, isSupabaseConfigured } from './supabaseClient';
 import { saveToCloud, loadFromCloud, restoreLocalStorage, getCloudUpdatedAt } from '../data/cloudSyncData';
 
-const DEBOUNCE_MS    = 2500;   // 自動保存デバウンス（ms）
-const LS_PREFIX      = 'takken-';
-// クラウド同期タイムスタンプ（このキーは 'takken-' で始まらないので同期対象外）
-const LS_SYNC_TS_KEY = '_takken_last_cloud_ts';
+const DEBOUNCE_MS     = 2500;
+const LS_PREFIX       = 'takken-';
+// 同期用メタキー（'takken-' で始まらないのでクラウド同期対象外）
+const LS_SYNC_TS_KEY  = '_takken_last_cloud_ts';
+const LS_OWNER_KEY    = '_takken_local_owner';   // どのアカウントのデータか
 
 // ── Context ──────────────────────────────────────────────────────
 
@@ -16,15 +17,27 @@ export function useCloudSync() {
   return useContext(CloudSyncContext);
 }
 
+// ── ローカルデータを全消去 ────────────────────────────────────────
+
+function clearLocalTakkenData() {
+  const keys = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith(LS_PREFIX)) keys.push(k);
+  }
+  keys.forEach(k => localStorage.removeItem(k));
+  localStorage.removeItem(LS_SYNC_TS_KEY);
+}
+
 // ── Provider ─────────────────────────────────────────────────────
 
 export function CloudSyncProvider({ children }) {
   const [user,        setUser]        = useState(null);
-  const [saveStatus,  setSaveStatus]  = useState('idle'); // 'idle'|'saving'|'saved'|'error'
-  const [autoLoaded,  setAutoLoaded]  = useState(false);  // 自動読み込み通知
+  const [saveStatus,  setSaveStatus]  = useState('idle');
+  const [autoLoaded,  setAutoLoaded]  = useState(false);
   const [configured,  setConfigured]  = useState(false);
   const debounceRef  = useRef(null);
-  const checkingRef  = useRef(false);  // 重複チェック防止
+  const checkingRef  = useRef(false);
 
   // ── 初期化：セッション取得 + AuthState 監視 ───────────────────
   useEffect(() => {
@@ -53,7 +66,6 @@ export function CloudSyncProvider({ children }) {
       if (error) {
         setSaveStatus('error');
       } else {
-        // 保存成功 → タイムスタンプ記録
         localStorage.setItem(LS_SYNC_TS_KEY, new Date().toISOString());
         setSaveStatus('saved');
         setTimeout(() => setSaveStatus('idle'), 3000);
@@ -76,6 +88,35 @@ export function CloudSyncProvider({ children }) {
     };
   }, [user, triggerAutoSave]);
 
+  // ── アカウント切り替え検知 → データ差し替え ─────────────────
+  useEffect(() => {
+    if (!user) return;
+
+    const localOwner = localStorage.getItem(LS_OWNER_KEY);
+
+    if (localOwner && localOwner !== user.id) {
+      // 別アカウントのデータが残っている → ローカルを消してクラウドから読み込む
+      if (debounceRef.current) clearTimeout(debounceRef.current); // 保存キャンセル
+      clearLocalTakkenData();
+      localStorage.setItem(LS_OWNER_KEY, user.id);
+
+      loadFromCloud(user.id).then(({ data, updatedAt, error }) => {
+        if (!error && data) {
+          restoreLocalStorage(data);
+          if (updatedAt) localStorage.setItem(LS_SYNC_TS_KEY, updatedAt);
+          setAutoLoaded(true);
+          setTimeout(() => setAutoLoaded(false), 4000);
+        }
+        // クラウドにデータなし = このアカウントは初回 → 空の状態で開始
+      });
+    } else {
+      // 同じアカウント（または初回）→ オーナーを記録してタイムスタンプ比較
+      localStorage.setItem(LS_OWNER_KEY, user.id);
+      checkAndAutoLoad(user.id);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
   // ── 画面がアクティブになったとき自動読み込み ─────────────────
   const checkAndAutoLoad = useCallback(async (userId) => {
     if (checkingRef.current) return;
@@ -83,9 +124,7 @@ export function CloudSyncProvider({ children }) {
     try {
       const { updatedAt } = await getCloudUpdatedAt(userId);
       if (!updatedAt) return;
-
       const localTs = localStorage.getItem(LS_SYNC_TS_KEY) || '';
-      // クラウドが新しい場合のみ自動読み込み
       if (updatedAt > localTs) {
         const { data, error } = await loadFromCloud(userId);
         if (!error && data) {
@@ -102,15 +141,8 @@ export function CloudSyncProvider({ children }) {
 
   useEffect(() => {
     if (!user) return;
-
-    // ログイン直後に一度チェック
-    checkAndAutoLoad(user.id);
-
-    // ページがフォアグラウンドに戻ったときにチェック
     const handleVisibility = () => {
-      if (document.visibilityState === 'visible') {
-        checkAndAutoLoad(user.id);
-      }
+      if (document.visibilityState === 'visible') checkAndAutoLoad(user.id);
     };
     document.addEventListener('visibilitychange', handleVisibility);
     return () => document.removeEventListener('visibilitychange', handleVisibility);
@@ -130,6 +162,7 @@ export function CloudSyncProvider({ children }) {
   const signOut = useCallback(async () => {
     if (!supabase) return;
     localStorage.removeItem(LS_SYNC_TS_KEY);
+    localStorage.removeItem(LS_OWNER_KEY);
     await supabase.auth.signOut();
   }, []);
 
@@ -159,14 +192,8 @@ export function CloudSyncProvider({ children }) {
   }, [user]);
 
   const value = {
-    user,
-    configured,
-    saveStatus,
-    autoLoaded,
-    signInWithGoogle,
-    signOut,
-    manualSave,
-    manualLoad,
+    user, configured, saveStatus, autoLoaded,
+    signInWithGoogle, signOut, manualSave, manualLoad,
   };
 
   return (

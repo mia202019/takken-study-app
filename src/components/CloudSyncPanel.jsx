@@ -74,6 +74,47 @@ function ConfirmDialog({ message, onOk, onCancel }) {
   );
 }
 
+// ── WebView 検出 ──────────────────────────────────────────────────
+
+function detectInAppBrowser() {
+  const ua = navigator.userAgent || '';
+  return (
+    /FBAN|FBAV|Instagram|Line\/|MicroMessenger|Twitter|Snapchat/i.test(ua) ||
+    (/iPhone|iPad|iPod/i.test(ua) && !/Safari\//i.test(ua) && /AppleWebKit/i.test(ua))
+  );
+}
+
+function InAppBrowserWarning() {
+  const url = window.location.href;
+  return (
+    <div style={{
+      background: '#fff8e1', border: '1.5px solid #f6c90e', borderRadius: 12,
+      padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10,
+    }}>
+      <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#7a5f00' }}>
+        ⚠️ このブラウザではGoogle ログインできません
+      </p>
+      <p style={{ margin: 0, fontSize: 12.5, color: '#7a5f00', lineHeight: 1.7 }}>
+        LINE・Instagram・Twitterなどのアプリ内ブラウザからは
+        Google 認証がブロックされます。<br />
+        <strong>Safari または Chrome</strong> でこのページを開いてください。
+      </p>
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{
+          display: 'inline-block', padding: '8px 14px', borderRadius: 8,
+          background: '#f6c90e', color: '#5a4400',
+          fontSize: 13, fontWeight: 700, textDecoration: 'none', textAlign: 'center',
+        }}
+      >
+        Safari / Chrome で開く
+      </a>
+    </div>
+  );
+}
+
 // ── Main Component ────────────────────────────────────────────────
 
 export default function CloudSyncPanel() {
@@ -130,6 +171,7 @@ export default function CloudSyncPanel() {
 
   // ── ログイン前 ────────────────────────────────────────────────
   if (!user) {
+    const isInApp = detectInAppBrowser();
     return (
       <section>
         <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 12 }}>クラウド同期</h2>
@@ -138,21 +180,27 @@ export default function CloudSyncPanel() {
             Google アカウントでログインすると学習データが自動的にクラウドに保存され、
             複数端末から同じデータを利用できます。
           </p>
-          <button
-            style={{ ...btn('primary'), alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 8 }}
-            onClick={async () => {
-              setLoginError(null);
-              const { error } = await signInWithGoogle();
-              if (error) setLoginError(error.message);
-            }}
-          >
-            <GoogleIcon />
-            Google でログイン
-          </button>
-          {loginError && (
-            <p style={{ margin: 0, fontSize: 12, color: '#c53030', padding: '6px 10px', background: '#fff5f5', borderRadius: 8 }}>
-              エラー：{loginError}
-            </p>
+          {isInApp ? (
+            <InAppBrowserWarning />
+          ) : (
+            <>
+              <button
+                style={{ ...btn('primary'), alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 8 }}
+                onClick={async () => {
+                  setLoginError(null);
+                  const { error } = await signInWithGoogle();
+                  if (error) setLoginError(error.message);
+                }}
+              >
+                <GoogleIcon />
+                Google でログイン
+              </button>
+              {loginError && (
+                <p style={{ margin: 0, fontSize: 12, color: '#c53030', padding: '6px 10px', background: '#fff5f5', borderRadius: 8 }}>
+                  エラー：{loginError}
+                </p>
+              )}
+            </>
           )}
         </div>
       </section>

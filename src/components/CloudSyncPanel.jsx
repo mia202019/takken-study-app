@@ -77,7 +77,7 @@ function ConfirmDialog({ message, onOk, onCancel }) {
 // ── Main Component ────────────────────────────────────────────────
 
 export default function CloudSyncPanel() {
-  const { user, configured, saveStatus, signInWithGoogle, signOut, manualSave, manualLoad } = useCloudSync();
+  const { user, configured, saveStatus, lastEvent, signInWithGoogle, signOut, manualSave, manualLoad } = useCloudSync();
   const [loadConfirm, setLoadConfirm] = useState(false);
   const [saveConfirm, setSaveConfirm] = useState(false);
   const [opResult,    setOpResult]    = useState(null); // { ok, msg }
@@ -154,6 +154,9 @@ export default function CloudSyncPanel() {
               エラー：{loginError}
             </p>
           )}
+          <p style={{ margin: 0, fontSize: 11, color: 'var(--text-secondary)', padding: '4px 8px', background: '#f5f5f5', borderRadius: 6 }}>
+            Auth状態：{lastEvent || 'なし'} / URL: {window.location.search || window.location.hash || 'なし'}
+          </p>
         </div>
       </section>
     );

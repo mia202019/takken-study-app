@@ -285,13 +285,13 @@ function ScheduleSection() {
         {!meta && state !== 'done' && (
           <div style={{ position: 'relative', display: 'inline-block', marginBottom: 10 }}>
             <div style={{
-              background: 'var(--accent)', color: '#fff',
+              background: '#f97316', color: '#fff',
               borderRadius: 10, padding: '8px 16px',
               fontSize: 12.5, fontWeight: 700, lineHeight: 1.5,
               display: 'flex', alignItems: 'center', gap: 8,
             }}>
               <span style={{
-                background: '#fff', color: 'var(--accent)',
+                background: '#fff', color: '#f97316',
                 borderRadius: 20, padding: '1px 8px',
                 fontSize: 11, fontWeight: 800, flexShrink: 0,
               }}>STEP②</span>
@@ -302,7 +302,7 @@ function ScheduleSection() {
               width: 0, height: 0,
               borderLeft: '8px solid transparent',
               borderRight: '8px solid transparent',
-              borderTop: '8px solid var(--accent)',
+              borderTop: '8px solid #f97316',
             }} />
           </div>
         )}
@@ -357,13 +357,13 @@ function ScheduleSection() {
           {!meta && state !== 'done' && (
             <div style={{ position: 'relative' }}>
               <div style={{
-                background: 'var(--accent)', color: '#fff',
+                background: '#f97316', color: '#fff',
                 borderRadius: 10, padding: '8px 16px',
                 fontSize: 12.5, fontWeight: 700, lineHeight: 1.5,
                 display: 'flex', alignItems: 'center', gap: 8,
               }}>
                 <span style={{
-                  background: '#fff', color: 'var(--accent)',
+                  background: '#fff', color: '#f97316',
                   borderRadius: 20, padding: '1px 8px',
                   fontSize: 11, fontWeight: 800, flexShrink: 0,
                 }}>STEP③</span>
@@ -374,7 +374,7 @@ function ScheduleSection() {
                 width: 0, height: 0,
                 borderLeft: '8px solid transparent',
                 borderRight: '8px solid transparent',
-                borderTop: '8px solid var(--accent)',
+                borderTop: '8px solid #f97316',
               }} />
             </div>
           )}

@@ -428,13 +428,13 @@ function TodayStudy({ tasks, onToggle, onGoSettings, hasSchedule, nextDate }) {
           {/* STEP① 吹き出し */}
           <div style={{ position: 'relative', display: 'inline-block', marginBottom: 10 }}>
             <div style={{
-              background: 'var(--accent)', color: '#fff',
+              background: '#f97316', color: '#fff',
               borderRadius: 10, padding: '8px 16px',
               fontSize: 12.5, fontWeight: 700, lineHeight: 1.5,
               display: 'flex', alignItems: 'center', gap: 8,
             }}>
               <span style={{
-                background: '#fff', color: 'var(--accent)',
+                background: '#fff', color: '#f97316',
                 borderRadius: 20, padding: '1px 8px',
                 fontSize: 11, fontWeight: 800, flexShrink: 0,
               }}>STEP①</span>
@@ -446,7 +446,7 @@ function TodayStudy({ tasks, onToggle, onGoSettings, hasSchedule, nextDate }) {
               width: 0, height: 0,
               borderLeft: '8px solid transparent',
               borderRight: '8px solid transparent',
-              borderTop: '8px solid var(--accent)',
+              borderTop: '8px solid #f97316',
             }} />
           </div>
 

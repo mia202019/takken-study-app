@@ -807,6 +807,13 @@ export default function Home() {
     return () => window.removeEventListener('resize', handler);
   }, []);
 
+  // Google ログイン完了時に設定ページへ自動遷移
+  useEffect(() => {
+    const handler = () => setActive('settings');
+    window.addEventListener('takken-signed-in', handler);
+    return () => window.removeEventListener('takken-signed-in', handler);
+  }, []);
+
   const remainingMin = useMemo(() => tasks.filter(t => !t.done).reduce((a, t) => a + t.min, 0), [tasks]);
 
   const flash = useCallback((msg) => {

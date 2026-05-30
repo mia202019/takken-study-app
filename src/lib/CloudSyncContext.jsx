@@ -32,8 +32,12 @@ export function CloudSyncProvider({ children }) {
       setUser(data.session?.user ?? null);
     });
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
+      // ログイン完了時に設定ページへ誘導するカスタムイベントを発火
+      if (event === 'SIGNED_IN') {
+        window.dispatchEvent(new CustomEvent('takken-signed-in'));
+      }
     });
     return () => listener.subscription.unsubscribe();
   }, []);

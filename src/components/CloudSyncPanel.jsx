@@ -86,31 +86,61 @@ function detectInAppBrowser() {
 
 function InAppBrowserWarning() {
   const url = window.location.href;
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 3000);
+    } catch {
+      // fallback: select the text field
+      const el = document.getElementById('takken-url-field');
+      if (el) { el.select(); document.execCommand('copy'); setCopied(true); setTimeout(() => setCopied(false), 3000); }
+    }
+  };
+
   return (
     <div style={{
       background: '#fff8e1', border: '1.5px solid #f6c90e', borderRadius: 12,
-      padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 10,
+      padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 12,
     }}>
       <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#7a5f00' }}>
         ⚠️ このブラウザではGoogle ログインできません
       </p>
       <p style={{ margin: 0, fontSize: 12.5, color: '#7a5f00', lineHeight: 1.7 }}>
-        LINE・Instagram・Twitterなどのアプリ内ブラウザからは
-        Google 認証がブロックされます。<br />
-        <strong>Safari または Chrome</strong> でこのページを開いてください。
+        LINE・Instagram などのアプリ内ブラウザでは Google 認証がブロックされます。<br />
+        下のURLをコピーして <strong>Safari または Chrome</strong> で開いてください。
       </p>
-      <a
-        href={url}
-        target="_blank"
-        rel="noopener noreferrer"
-        style={{
-          display: 'inline-block', padding: '8px 14px', borderRadius: 8,
-          background: '#f6c90e', color: '#5a4400',
-          fontSize: 13, fontWeight: 700, textDecoration: 'none', textAlign: 'center',
-        }}
-      >
-        Safari / Chrome で開く
-      </a>
+      {/* URL表示 + コピーボタン */}
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <input
+          id="takken-url-field"
+          readOnly
+          value={url}
+          style={{
+            flex: 1, fontSize: 11, padding: '6px 8px', borderRadius: 7,
+            border: '1px solid #e0c060', background: '#fffde7', color: '#5a4400',
+            fontFamily: 'monospace', minWidth: 0,
+          }}
+          onFocus={e => e.target.select()}
+        />
+        <button
+          onClick={handleCopy}
+          style={{
+            flexShrink: 0, padding: '7px 14px', borderRadius: 8, border: 'none',
+            background: copied ? '#4caf50' : '#f6c90e',
+            color: copied ? '#fff' : '#5a4400',
+            fontSize: 12.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+            whiteSpace: 'nowrap', transition: 'background .2s',
+          }}
+        >
+          {copied ? 'コピー済み ✓' : 'URLをコピー'}
+        </button>
+      </div>
+      <p style={{ margin: 0, fontSize: 11.5, color: '#9a7a00' }}>
+        ① 上のURLをコピー → ② Safari / Chrome を開く → ③ アドレスバーに貼り付けてアクセス
+      </p>
     </div>
   );
 }

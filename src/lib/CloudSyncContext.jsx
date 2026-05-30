@@ -28,13 +28,36 @@ export function CloudSyncProvider({ children }) {
     if (!isSupabaseConfigured()) { setConfigured(false); return; }
     setConfigured(true);
 
-    supabase.auth.getSession().then(({ data }) => {
+    // URLにOAuthコード/トークンがある場合はセッション交換してから取得
+    const hash   = window.location.hash;
+    const search = window.location.search;
+    const isOAuthCallback =
+      hash.includes('access_token') ||
+      hash.includes('error') ||
+      search.includes('code=');
+
+    const initSession = async () => {
+      if (isOAuthCallback && search.includes('code=')) {
+        // PKCE: code を交換してセッションを取得
+        const { data, error } = await supabase.auth.exchangeCodeForSession(
+          window.location.href
+        );
+        if (!error && data.session) {
+          setUser(data.session.user);
+          // クリーンなURLに戻す
+          window.history.replaceState({}, '', window.location.pathname);
+          window.dispatchEvent(new CustomEvent('takken-signed-in'));
+          return;
+        }
+      }
+      const { data } = await supabase.auth.getSession();
       setUser(data.session?.user ?? null);
-    });
+    };
+
+    initSession();
 
     const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
-      // ログイン完了時に設定ページへ誘導するカスタムイベントを発火
       if (event === 'SIGNED_IN') {
         window.dispatchEvent(new CustomEvent('takken-signed-in'));
       }

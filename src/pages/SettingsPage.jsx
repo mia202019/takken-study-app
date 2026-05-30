@@ -410,7 +410,7 @@ export default function SettingsPage() {
       <div className="tk-card" style={{ borderTop: '3px solid var(--ok)' }}>
         <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 6 }}>学習スケジュール</div>
         <div style={{ fontSize: 13, color: 'var(--ink-3)', lineHeight: 1.65, marginBottom: 18 }}>
-          2026年6月1日〜10月18日（本試験日）の日次学習タスクを自動生成します。<br />
+          任意の開始日〜2026年10月18日（本試験日）の日次学習タスクを自動生成します。<br />
           フェーズごとに科目・タスク種別を切り替え、毎日「何をやるか」をガイドします。
         </div>
         <ScheduleSection />
@@ -424,7 +424,7 @@ export default function SettingsPage() {
           <InfoRow label="対象試験"       value="宅地建物取引士（2026年度）" />
           <InfoRow label="本試験日"       value="2026年10月18日（日）" />
           <InfoRow label="データ保存先"   value="ブラウザ（localStorage）" />
-          <InfoRow label="データ共有"     value="他デバイスへは手動バックアップで" />
+          <InfoRow label="データ同期"     value="Googleアカウントでクラウド自動同期" />
         </div>
       </div>
 
@@ -433,8 +433,8 @@ export default function SettingsPage() {
         <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 12 }}>データ管理の注意</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {[
-            'ブラウザのキャッシュ削除やプライベートモードではデータが消える場合があります',
-            '定期的にJSONバックアップを取ることをお勧めします',
+            'Googleアカウントでログインするとデータが自動でクラウド保存され、複数端末で同期できます',
+            'ブラウザのキャッシュ削除やプライベートモードではローカルデータが消える場合があります。Googleログインで保護することをお勧めします',
             '教材の本文・問題文・解説を記録する場合は、個人学習用として管理してください。公開・共有・販売する場合は、著作権のある内容を含めないでください。',
           ].map((note, i) => (
             <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>

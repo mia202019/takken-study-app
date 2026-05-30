@@ -4,6 +4,7 @@ import {
   generateAndSave, loadScheduleMeta,
   STUDY_START, EXAM_DATE,
 } from '../data/scheduleData';
+import CloudSyncPanel from '../components/CloudSyncPanel';
 
 // ── Helpers ────────────────────────────────────────────────────────
 
@@ -349,14 +350,9 @@ export default function SettingsPage() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {/* Schedule section */}
-      <div className="tk-card" style={{ borderTop: '3px solid var(--ok)' }}>
-        <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 6 }}>学習スケジュール</div>
-        <div style={{ fontSize: 13, color: 'var(--ink-3)', lineHeight: 1.65, marginBottom: 18 }}>
-          2026年6月1日〜10月18日（本試験日）の日次学習タスクを自動生成します。<br />
-          フェーズごとに科目・タスク種別を切り替え、毎日「何をやるか」をガイドします。
-        </div>
-        <ScheduleSection />
+      {/* Cloud Sync section */}
+      <div className="tk-card" style={{ borderTop: '3px solid #4285F4' }}>
+        <CloudSyncPanel />
       </div>
 
       {/* Backup section */}
@@ -382,6 +378,16 @@ export default function SettingsPage() {
         <div style={{ height: 1, background: 'var(--line)', margin: '20px 0' }} />
 
         <ImportSection />
+      </div>
+
+      {/* Schedule section */}
+      <div className="tk-card" style={{ borderTop: '3px solid var(--ok)' }}>
+        <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 6 }}>学習スケジュール</div>
+        <div style={{ fontSize: 13, color: 'var(--ink-3)', lineHeight: 1.65, marginBottom: 18 }}>
+          2026年6月1日〜10月18日（本試験日）の日次学習タスクを自動生成します。<br />
+          フェーズごとに科目・タスク種別を切り替え、毎日「何をやるか」をガイドします。
+        </div>
+        <ScheduleSection />
       </div>
 
       {/* About section */}

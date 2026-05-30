@@ -117,13 +117,15 @@ function useTasks() {
     return () => window.removeEventListener('storage', handler);
   }, []);
 
-  // 表示順: 持ち越し → 固定carry → 通常
+  // 表示順: 持ち越し → サンプル（スケジュールなし時のみ）→ 通常
   const tasks = useMemo(() => {
     const carried  = scheduledToday.filter(t => t.carriedOver);
     const regular  = scheduledToday.filter(t => !t.carriedOver);
+    // スケジュール済みタスクがある日はサンプルタスクを非表示
+    const showSamples = scheduledToday.length === 0 && extraTasks.length === 0;
     return [
       ...carried.map(t  => ({ ...t, done: !!doneMap[t.id] })),
-      ...INITIAL_TASKS.map(t => ({ ...t, done: !!doneMap[t.id] })),
+      ...(showSamples ? INITIAL_TASKS.map(t => ({ ...t, done: !!doneMap[t.id] })) : []),
       ...regular.map(t  => ({ ...t, done: !!doneMap[t.id] })),
       ...extraTasks.map(t => ({ ...t, done: !!doneMap[t.id] })),
     ];

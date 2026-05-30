@@ -27,7 +27,7 @@ export const NAV = [
 export const NAV_PRIMARY = ['home', 'map', 'review', 'mistake'];
 
 export const INITIAL_TASKS = [
-  { id: 't0', carry: true,  type: 'tidy',   cat: null,    title: '間違いノート整理', topic: '',           min: 10 },
+  { id: 't0', carry: false, type: 'tidy',   cat: null,    title: '間違いノート整理', topic: '',           min: 10 },
   { id: 't1', carry: false, type: 'new',    cat: 'gyo',   title: '免許',           topic: '免許の基準',   min: 30 },
   { id: 't2', carry: false, type: 'review', cat: 'kenri', title: '意思表示',       topic: '錯誤・詐欺',   min: 20 },
   { id: 't3', carry: false, type: 'drill',  cat: 'gyo',   title: '宅建業法 10問',  topic: '一問一答',     min: 30 },

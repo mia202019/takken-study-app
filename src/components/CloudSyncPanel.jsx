@@ -82,6 +82,7 @@ export default function CloudSyncPanel() {
   const [saveConfirm, setSaveConfirm] = useState(false);
   const [opResult,    setOpResult]    = useState(null); // { ok, msg }
   const [busy,        setBusy]        = useState(false);
+  const [loginError,  setLoginError]  = useState(null);
 
   // ── 未設定 ───────────────────────────────────────────────────
   if (!configured) {
@@ -139,11 +140,20 @@ export default function CloudSyncPanel() {
           </p>
           <button
             style={{ ...btn('primary'), alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 8 }}
-            onClick={signInWithGoogle}
+            onClick={async () => {
+              setLoginError(null);
+              const { error } = await signInWithGoogle();
+              if (error) setLoginError(error.message);
+            }}
           >
             <GoogleIcon />
             Google でログイン
           </button>
+          {loginError && (
+            <p style={{ margin: 0, fontSize: 12, color: '#c53030', padding: '6px 10px', background: '#fff5f5', borderRadius: 8 }}>
+              エラー：{loginError}
+            </p>
+          )}
         </div>
       </section>
     );

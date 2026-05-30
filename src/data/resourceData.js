@@ -24,30 +24,59 @@ export const RESOURCE_STATUSES = [
 const TS = '2026-01-01T00:00:00.000Z';
 
 const DEFAULT_RESOURCES = [
-  { id: 'res-01', title: 'RETIO 公式過去問ページ',                                  type: 'official', subjectId: null,    topicId: null, url: null, description: '宅建試験の公式過去問と正解番号表', status: 'reference', memo: null },
-  { id: 'res-02', title: 'e-Gov 宅地建物取引業法',                                  type: 'law',      subjectId: 'gyo',   topicId: null, url: null, description: null, status: 'reference', memo: null },
-  { id: 'res-03', title: 'e-Gov 民法',                                              type: 'law',      subjectId: 'kenri', topicId: null, url: null, description: null, status: 'reference', memo: null },
-  { id: 'res-04', title: 'e-Gov 借地借家法',                                        type: 'law',      subjectId: 'kenri', topicId: null, url: null, description: null, status: 'reference', memo: null },
-  { id: 'res-05', title: 'e-Gov 建築基準法',                                        type: 'law',      subjectId: 'horei', topicId: null, url: null, description: null, status: 'reference', memo: null },
-  { id: 'res-06', title: 'e-Gov 都市計画法',                                        type: 'law',      subjectId: 'horei', topicId: null, url: null, description: null, status: 'reference', memo: null },
-  { id: 'res-07', title: 'e-Gov 農地法',                                            type: 'law',      subjectId: 'horei', topicId: null, url: null, description: null, status: 'reference', memo: null },
-  { id: 'res-08', title: 'e-Gov 国土利用計画法',                                    type: 'law',      subjectId: 'horei', topicId: null, url: null, description: null, status: 'reference', memo: null },
-  { id: 'res-09', title: '国交省 宅建業法改正情報',                                  type: 'official', subjectId: 'gyo',   topicId: null, url: null, description: null, status: 'reference', memo: null },
-  { id: 'res-10', title: '棚田行政書士の不動産大学',                                type: 'youtube',  subjectId: null,    topicId: null, url: null, description: null, status: 'reference', memo: null },
-  { id: 'res-11', title: 'ゆーき大学 宅建',                                        type: 'youtube',  subjectId: null,    topicId: null, url: null, description: null, status: 'reference', memo: null },
-  { id: 'res-12', title: '吉野塾',                                                  type: 'youtube',  subjectId: null,    topicId: null, url: null, description: null, status: 'reference', memo: null },
-  { id: 'res-13', title: '2026年度版 みんなが欲しかった！宅建士の教科書',           type: 'textbook', subjectId: null,    topicId: null, url: null, description: null, status: 'using',     memo: null },
-  { id: 'res-14', title: '2026年度版 みんなが欲しかった！宅建士の論点別過去問題集', type: 'workbook', subjectId: null,    topicId: null, url: null, description: null, status: 'using',     memo: null },
+  { id: 'res-01', title: 'RETIO 公式過去問ページ',                                  type: 'official', subjectId: null,    topicId: null, url: 'https://www.retio.or.jp/exam/past_ques_ans/other/',                                                  description: '宅建試験の公式過去問と正解番号表',           status: 'reference', memo: null },
+  { id: 'res-02', title: 'e-Gov 宅地建物取引業法',                                  type: 'law',      subjectId: 'gyo',   topicId: null, url: 'https://laws.e-gov.go.jp/law/327AC0000000176',                                                       description: '条文全文（e-Gov 法令検索）',                status: 'reference', memo: null },
+  { id: 'res-03', title: 'e-Gov 民法',                                              type: 'law',      subjectId: 'kenri', topicId: null, url: 'https://laws.e-gov.go.jp/law/129AC0000000089',                                                       description: '条文全文（e-Gov 法令検索）',                status: 'reference', memo: null },
+  { id: 'res-04', title: 'e-Gov 借地借家法',                                        type: 'law',      subjectId: 'kenri', topicId: null, url: 'https://laws.e-gov.go.jp/law/321AC0000000050',                                                       description: '条文全文（e-Gov 法令検索）',                status: 'reference', memo: null },
+  { id: 'res-05', title: 'e-Gov 建築基準法',                                        type: 'law',      subjectId: 'horei', topicId: null, url: 'https://laws.e-gov.go.jp/law/325AC0000000201',                                                       description: '条文全文（e-Gov 法令検索）',                status: 'reference', memo: null },
+  { id: 'res-06', title: 'e-Gov 都市計画法',                                        type: 'law',      subjectId: 'horei', topicId: null, url: 'https://laws.e-gov.go.jp/law/343AC0000000100',                                                       description: '条文全文（e-Gov 法令検索）',                status: 'reference', memo: null },
+  { id: 'res-07', title: 'e-Gov 農地法',                                            type: 'law',      subjectId: 'horei', topicId: null, url: 'https://laws.e-gov.go.jp/law/327AC0000000229',                                                       description: '条文全文（e-Gov 法令検索）',                status: 'reference', memo: null },
+  { id: 'res-08', title: 'e-Gov 国土利用計画法',                                    type: 'law',      subjectId: 'horei', topicId: null, url: 'https://laws.e-gov.go.jp/law/349AC1000000092',                                                       description: '条文全文（e-Gov 法令検索）',                status: 'reference', memo: null },
+  { id: 'res-09', title: '国交省 宅建業法・宅建士 関連情報',                        type: 'official', subjectId: 'gyo',   topicId: null, url: 'https://www.mlit.go.jp/totikensangyo/const/1_6_bf_000009.html',                                      description: '宅建業法改正・試験・登録関連の公式情報',    status: 'reference', memo: null },
+  { id: 'res-10', title: '棚田行政書士の不動産大学',                                type: 'youtube',  subjectId: null,    topicId: null, url: 'https://www.youtube.com/@fudousandaigaku',                                                           description: '宅建全科目をわかりやすく解説',              status: 'reference', memo: null },
+  { id: 'res-11', title: 'ゆーき大学 宅建',                                        type: 'youtube',  subjectId: null,    topicId: null, url: 'https://www.youtube.com/channel/UC9FTrf3ryoNxs01o_a2FE6g',                                           description: '語呂合わせ・図解で暗記しやすい講義',        status: 'reference', memo: null },
+  { id: 'res-12', title: '吉野塾',                                                  type: 'youtube',  subjectId: null,    topicId: null, url: 'https://www.youtube.com/channel/UCLPbvf6dLK3ta73C-fxSSKA',                                           description: '宅建合格実績多数・丁寧な解説',              status: 'reference', memo: null },
+  { id: 'res-13', title: '2026年度版 みんなが欲しかった！宅建士の教科書',           type: 'textbook', subjectId: null,    topicId: null, url: 'https://bookstore.tac-school.co.jp/book/detail/111927',                                              description: 'TAC出版・フルカラーで図解豊富',             status: 'using',     memo: null },
+  { id: 'res-14', title: '2026年度版 みんなが欲しかった！宅建士の論点別過去問題集', type: 'workbook', subjectId: null,    topicId: null, url: 'https://bookstore.tac-school.co.jp/book/detail/111928',                                              description: 'TAC出版・教科書とセットで使用',             status: 'using',     memo: null },
 ].map(r => ({ ...r, createdAt: TS, updatedAt: TS }));
+
+// ── URL マイグレーション（既存ユーザーのデフォルトリソースにURLを補完） ───
+
+const DEFAULT_URL_MAP = Object.fromEntries(
+  DEFAULT_RESOURCES.map(r => [r.id, { url: r.url, description: r.description }])
+);
+
+function migrateUrls(list) {
+  let changed = false;
+  const updated = list.map(r => {
+    const def = DEFAULT_URL_MAP[r.id];
+    if (!def) return r;
+    const needsUrl  = !r.url  && def.url;
+    const needsDesc = !r.description && def.description;
+    if (!needsUrl && !needsDesc) return r;
+    changed = true;
+    return {
+      ...r,
+      url:         needsUrl  ? def.url         : r.url,
+      description: needsDesc ? def.description : r.description,
+    };
+  });
+  return { updated, changed };
+}
 
 // ── localStorage 読み書き ─────────────────────────────────────────
 
 export function loadResources() {
   try {
     const stored = localStorage.getItem(LS_RESOURCES_KEY);
-    if (stored) return JSON.parse(stored);
-    localStorage.setItem(LS_RESOURCES_KEY, JSON.stringify(DEFAULT_RESOURCES));
-    return DEFAULT_RESOURCES;
+    if (!stored) {
+      localStorage.setItem(LS_RESOURCES_KEY, JSON.stringify(DEFAULT_RESOURCES));
+      return DEFAULT_RESOURCES;
+    }
+    const parsed = JSON.parse(stored);
+    const { updated, changed } = migrateUrls(parsed);
+    if (changed) localStorage.setItem(LS_RESOURCES_KEY, JSON.stringify(updated));
+    return updated;
   } catch { return DEFAULT_RESOURCES; }
 }
 

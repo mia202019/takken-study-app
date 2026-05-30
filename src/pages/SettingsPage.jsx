@@ -1,8 +1,8 @@
 import { useRef, useState, useMemo } from 'react';
 import Icon from '../components/Icon';
 import {
-  generateAndSave, loadScheduleMeta,
-  STUDY_START, EXAM_DATE,
+  generateAndSave, loadScheduleMeta, loadStudyStart,
+  EXAM_DATE,
 } from '../data/scheduleData';
 import CloudSyncPanel from '../components/CloudSyncPanel';
 
@@ -243,13 +243,23 @@ function ImportSection() {
 // ── Schedule ───────────────────────────────────────────────────────
 
 function ScheduleSection() {
-  const [meta, setMeta] = useState(loadScheduleMeta);
-  const [state, setState] = useState('idle'); // idle | done | error
-  const [errorMsg, setErrorMsg] = useState('');
+  const [meta,      setMeta]      = useState(loadScheduleMeta);
+  const [startDate, setStartDate] = useState(loadStudyStart);
+  const [state,     setState]     = useState('idle'); // idle | done | error
+  const [errorMsg,  setErrorMsg]  = useState('');
+
+  // 今日〜試験前日の範囲に制限
+  const today   = fmtDate(new Date());
+  const maxDate = '2026-10-17';
 
   const handleGenerate = () => {
+    if (!startDate || startDate > maxDate) {
+      setErrorMsg('開始日は2026年10月17日以前に設定してください');
+      setState('error');
+      return;
+    }
     try {
-      const result = generateAndSave();
+      const result = generateAndSave(startDate);
       setMeta(result);
       setState('done');
       setTimeout(() => setState('idle'), 3000);
@@ -266,16 +276,44 @@ function ScheduleSection() {
   };
 
   return (
-    <div>
-      <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ink-2)', marginBottom: 8 }}>スケジュール生成</div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-      {/* Meta info */}
-      {meta ? (
+      {/* 開始日設定 */}
+      <div>
+        <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ink-2)', marginBottom: 8 }}>
+          学習開始日
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <input
+            type="date"
+            value={startDate}
+            min={today}
+            max={maxDate}
+            onChange={e => setStartDate(e.target.value)}
+            style={{
+              padding: '9px 12px', borderRadius: 10,
+              border: '1.5px solid var(--border, #ddd)',
+              background: 'var(--input-bg, #fff)',
+              color: 'var(--ink-1)',
+              fontSize: 14, fontFamily: 'inherit',
+              cursor: 'pointer',
+            }}
+          />
+          <span style={{ fontSize: 12.5, color: 'var(--ink-3)' }}>
+            〜 2026年10月18日（本試験日）
+          </span>
+        </div>
+        <div style={{ fontSize: 11.5, color: 'var(--ink-4)', marginTop: 5 }}>
+          今日以降の日付を選択してください。選んだ日から試験日までのタスクが生成されます。
+        </div>
+      </div>
+
+      {/* 生成済みメタ情報 */}
+      {meta && (
         <div style={{
-          padding: '10px 14px', background: 'var(--chip-neutral-bg)',
-          borderRadius: 10, marginBottom: 14,
+          padding: '10px 14px', background: 'var(--chip-neutral-bg)', borderRadius: 10,
         }}>
-          <InfoRow label="対象期間"       value={fmtPeriod(meta.startDate, meta.endDate)} />
+          <InfoRow label="生成済み期間"   value={fmtPeriod(meta.startDate, meta.endDate)} />
           <InfoRow label="最終生成日時"   value={fmtDateTime(meta.generatedAt)} />
           <InfoRow label="生成済みタスク" value={`${meta.taskCount} 件`} />
           {meta.newCount === 0 && (
@@ -284,34 +322,22 @@ function ScheduleSection() {
             </div>
           )}
         </div>
-      ) : (
-        <div style={{ fontSize: 12.5, color: 'var(--ink-3)', marginBottom: 14 }}>
-          まだスケジュールを生成していません。
-        </div>
       )}
 
-      {/* Generate button */}
-      {state !== 'error' && (
+      {/* 生成ボタン */}
+      {state !== 'error' ? (
         <button
           onClick={handleGenerate}
           className="tk-btn-primary"
-          style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '11px 18px' }}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '11px 18px', alignSelf: 'flex-start' }}
         >
           <Icon name="map" size={16} stroke={1.8} />
-          {state === 'done'
-            ? '生成完了 ✓'
-            : meta ? 'スケジュールを再生成する' : '6/1〜試験日までの学習タスクを生成'}
+          {state === 'done' ? '生成完了 ✓' : meta ? 'スケジュールを再生成する' : '学習タスクを生成する'}
         </button>
-      )}
-
-      {state === 'error' && (
+      ) : (
         <div style={{ padding: '13px 14px', background: 'var(--warn-bg)', borderRadius: 10 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--warn)', marginBottom: 5 }}>
-            生成エラー
-          </div>
-          <div style={{ fontSize: 12.5, color: 'var(--ink-2)', lineHeight: 1.5, marginBottom: 12 }}>
-            {errorMsg}
-          </div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--warn)', marginBottom: 5 }}>生成エラー</div>
+          <div style={{ fontSize: 12.5, color: 'var(--ink-2)', lineHeight: 1.5, marginBottom: 12 }}>{errorMsg}</div>
           <button onClick={() => setState('idle')} style={{
             padding: '7px 14px', borderRadius: 8, border: 'none', cursor: 'pointer',
             background: 'var(--chip-neutral-bg)', color: 'var(--ink-2)',
@@ -323,7 +349,7 @@ function ScheduleSection() {
       )}
 
       <div style={{
-        marginTop: 10, display: 'flex', alignItems: 'flex-start', gap: 8,
+        display: 'flex', alignItems: 'flex-start', gap: 8,
         fontSize: 11.5, color: 'var(--ink-4)', lineHeight: 1.55,
       }}>
         <Icon name="note" size={13} stroke={1.7} style={{ marginTop: 1, flexShrink: 0 }} />

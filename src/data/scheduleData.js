@@ -4,11 +4,30 @@
 
 import { TOPICS } from './topicsData';
 
-export const LS_SCHEDULED_KEY     = 'takken-scheduled-tasks';
-export const LS_SCHEDULE_META_KEY = 'takken-schedule-meta';
+export const LS_SCHEDULED_KEY      = 'takken-scheduled-tasks';
+export const LS_SCHEDULE_META_KEY  = 'takken-schedule-meta';
+export const LS_STUDY_START_KEY    = 'takken-study-start-date'; // ユーザー設定の開始日
 
-export const STUDY_START = '2026-06-01';
-export const EXAM_DATE   = '2026-10-18';
+export const STUDY_START_DEFAULT = '2026-06-01'; // デフォルト開始日（後方互換）
+export const STUDY_START         = STUDY_START_DEFAULT; // 既存コードの互換性維持
+export const EXAM_DATE           = '2026-10-18';
+
+function formatDate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/** ユーザーが設定した開始日を取得（未設定なら今日 or デフォルト） */
+export function loadStudyStart() {
+  const saved = localStorage.getItem(LS_STUDY_START_KEY);
+  if (saved) return saved;
+  // 未設定の場合：今日がデフォルト開始日より後なら今日、そうでなければデフォルト
+  const today = formatDate(new Date());
+  return today > STUDY_START_DEFAULT ? today : STUDY_START_DEFAULT;
+}
+
+export function saveStudyStart(dateStr) {
+  localStorage.setItem(LS_STUDY_START_KEY, dateStr);
+}
 
 // ── 内部データ ─────────────────────────────────────────────────────
 
@@ -48,10 +67,6 @@ const PHASE_CAT_CYCLE = {
 function parseLocalDate(str) {
   const [y, m, d] = str.split('-').map(Number);
   return new Date(y, m - 1, d);
-}
-
-function formatDate(d) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 function isWeekend(date) {
@@ -165,8 +180,9 @@ function generateDayTasks(dateStr, dayIndex, phaseId, weekend) {
 
 // ── スケジュール全体生成 ───────────────────────────────────────────
 
-export function generateSchedule() {
-  const start = parseLocalDate(STUDY_START);
+export function generateSchedule(startDate) {
+  const effectiveStart = startDate || loadStudyStart();
+  const start = parseLocalDate(effectiveStart);
   const end   = parseLocalDate(EXAM_DATE);
   const all   = [];
 
@@ -208,9 +224,12 @@ function saveScheduleMeta(meta) {
 
 // ── 生成 & 保存（重複防止マージ） ────────────────────────────────
 
-export function generateAndSave() {
+export function generateAndSave(startDate) {
+  const effectiveStart = startDate || loadStudyStart();
+  if (startDate) saveStudyStart(startDate); // 指定された場合は保存
+
   const existing    = loadScheduledTasks();
-  const generated   = generateSchedule();
+  const generated   = generateSchedule(effectiveStart);
 
   // date::title をキーに重複チェック（手動タスク・完了タスクを保護）
   const existingKeys = new Set(existing.map(t => `${t.date}::${t.title}`));
@@ -223,7 +242,7 @@ export function generateAndSave() {
     generatedAt: new Date().toISOString(),
     taskCount:   merged.length,
     newCount:    newTasks.length,
-    startDate:   STUDY_START,
+    startDate:   effectiveStart,
     endDate:     EXAM_DATE,
   };
   saveScheduleMeta(meta);

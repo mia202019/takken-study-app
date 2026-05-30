@@ -93,6 +93,38 @@ function saveMats(mats) {
   return mats;
 }
 
+export function addMaterial(fields) {
+  const now = new Date().toISOString();
+  const item = {
+    id: `mat-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+    title: fields.title.trim(),
+    type: fields.type || 'textbook',
+    status: fields.status || 'using',
+    memo: fields.memo?.trim() || null,
+    createdAt: now,
+    updatedAt: now,
+  };
+  return saveMats([...loadMaterials(), item]);
+}
+
+export function editMaterial(id, fields) {
+  const now = new Date().toISOString();
+  return saveMats(loadMaterials().map(m => m.id !== id ? m : {
+    ...m,
+    title: fields.title.trim(),
+    type: fields.type,
+    status: fields.status,
+    memo: fields.memo?.trim() || null,
+    updatedAt: now,
+  }));
+}
+
+export function deleteMaterial(id) {
+  saveMats(loadMaterials().filter(m => m.id !== id));
+  // 紐づくユニットも削除
+  saveUnits(loadMaterialUnits().filter(u => u.materialId !== id));
+}
+
 function saveUnits(units) {
   localStorage.setItem(LS_UNITS_KEY, JSON.stringify(units));
   window.dispatchEvent(new StorageEvent('storage', { key: LS_UNITS_KEY }));

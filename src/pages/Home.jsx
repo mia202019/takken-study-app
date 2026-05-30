@@ -94,24 +94,29 @@ function loadDoneState() {
 function useTasks() {
   const [doneMap, setDoneMap] = useState(loadDoneState);
   const [extraTasks, setExtraTasks] = useState([]);
-  const [scheduledToday, setScheduledToday] = useState(() =>
-    getScheduledTasksForDate(loadScheduledTasks(), TODAY_STR)
-  );
+
+  const loadTodayAndMeta = () => {
+    const all = loadScheduledTasks();
+    const todayTasks = getScheduledTasksForDate(all, TODAY_STR);
+    // スケジュール存在 & 今日以降の最初のタスク日
+    const nextDate = all.length > 0
+      ? all.filter(t => t.date >= TODAY_STR).sort((a, b) => a.date.localeCompare(b.date))[0]?.date ?? null
+      : null;
+    return { todayTasks, hasSchedule: all.length > 0, nextDate };
+  };
+
+  const [meta, setMeta] = useState(loadTodayAndMeta);
 
   // マウント時に1度だけ持ち越し処理を実行
   useEffect(() => {
     const changed = processCarryover(loadDoneState(), TODAY_STR);
-    if (changed) {
-      setScheduledToday(getScheduledTasksForDate(loadScheduledTasks(), TODAY_STR));
-    }
+    if (changed) setMeta(loadTodayAndMeta());
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // スケジュールが生成・更新されたら今日分を再取得
+  // スケジュールが生成・更新されたら再取得
   useEffect(() => {
     const handler = (e) => {
-      if (!e.key || e.key === LS_SCHEDULED_KEY) {
-        setScheduledToday(getScheduledTasksForDate(loadScheduledTasks(), TODAY_STR));
-      }
+      if (!e.key || e.key === LS_SCHEDULED_KEY) setMeta(loadTodayAndMeta());
     };
     window.addEventListener('storage', handler);
     return () => window.removeEventListener('storage', handler);
@@ -119,14 +124,14 @@ function useTasks() {
 
   // 表示順: 持ち越し → 通常 → 手動追加
   const tasks = useMemo(() => {
-    const carried = scheduledToday.filter(t => t.carriedOver);
-    const regular = scheduledToday.filter(t => !t.carriedOver);
+    const carried = meta.todayTasks.filter(t => t.carriedOver);
+    const regular = meta.todayTasks.filter(t => !t.carriedOver);
     return [
       ...carried.map(t => ({ ...t, done: !!doneMap[t.id] })),
       ...regular.map(t => ({ ...t, done: !!doneMap[t.id] })),
       ...extraTasks.map(t => ({ ...t, done: !!doneMap[t.id] })),
     ];
-  }, [doneMap, scheduledToday, extraTasks]);
+  }, [doneMap, meta.todayTasks, extraTasks]);
 
   const toggle = useCallback((id) => {
     setDoneMap(prev => {
@@ -140,7 +145,7 @@ function useTasks() {
     setExtraTasks(prev => [...prev, task]);
   }, []);
 
-  return { tasks, toggle, addTask };
+  return { tasks, toggle, addTask, hasSchedule: meta.hasSchedule, nextDate: meta.nextDate };
 }
 
 // ── Coach bubble ──────────────────────────────────────────────────
@@ -352,11 +357,18 @@ function StatChip({ label, value, accent }) {
   );
 }
 
-function TodayStudy({ tasks, onToggle, onGoSettings }) {
+function TodayStudy({ tasks, onToggle, onGoSettings, hasSchedule, nextDate }) {
   const done = tasks.filter(t => t.done).length;
   const remaining = tasks.filter(t => !t.done).reduce((a, t) => a + t.min, 0);
   const carryTasks = tasks.filter(t => t.carriedOver);
   const normal     = tasks.filter(t => !t.carriedOver);
+
+  // 開始待ちメッセージ用：次の学習日を人が読める形式に
+  function fmtNextDate(d) {
+    if (!d) return '';
+    const [, m, day] = d.split('-');
+    return `${Number(m)}月${Number(day)}日`;
+  }
 
   return (
     <div className="tk-card" style={{ borderTop: '3px solid var(--accent)' }}>
@@ -376,8 +388,8 @@ function TodayStudy({ tasks, onToggle, onGoSettings }) {
         )}
       </div>
 
-      {tasks.length === 0 ? (
-        /* スケジュール未生成時の誘導 */
+      {tasks.length === 0 && !hasSchedule && (
+        /* ① スケジュール未生成 */
         <div style={{ textAlign: 'center', padding: '16px 8px 8px' }}>
           <Icon name="note" size={32} stroke={1.3} style={{ color: 'var(--ink-4)', display: 'block', margin: '0 auto 10px' }} />
           <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink-2)', marginBottom: 6 }}>
@@ -397,7 +409,25 @@ function TodayStudy({ tasks, onToggle, onGoSettings }) {
             スケジュールを設定する →
           </button>
         </div>
-      ) : (
+      )}
+
+      {tasks.length === 0 && hasSchedule && (
+        /* ② スケジュール生成済み・開始前 */
+        <div style={{ textAlign: 'center', padding: '16px 8px 8px' }}>
+          <Icon name="calendar" size={32} stroke={1.3} style={{ color: 'var(--accent)', display: 'block', margin: '0 auto 10px' }} />
+          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink-2)', marginBottom: 6 }}>
+            スケジュール設定済み
+          </div>
+          <div style={{ fontSize: 12.5, color: 'var(--ink-3)', lineHeight: 1.7 }}>
+            {nextDate
+              ? <>学習開始日は <strong style={{ color: 'var(--accent)' }}>{fmtNextDate(nextDate)}</strong> です。<br />それまでは自由に準備しておきましょう！</>
+              : 'スケジュールは本試験日まで設定されています。'}
+          </div>
+        </div>
+      )}
+
+      {tasks.length > 0 && (
+        /* ③ タスクあり：通常表示 */
         <>
           {carryTasks.length > 0 && (
             <div>
@@ -829,7 +859,7 @@ function pageFromHash() {
 }
 
 export default function Home() {
-  const { tasks, toggle, addTask } = useTasks();
+  const { tasks, toggle, addTask, hasSchedule, nextDate } = useTasks();
   const [active, setActive] = useState(pageFromHash);
   const [sheet, setSheet] = useState(null);
   const [more, setMore] = useState(false);
@@ -892,7 +922,7 @@ export default function Home() {
   // Mobile layout: TodayStudy first, then rest
   const mobileHomeContent = (
     <>
-      <TodayStudy tasks={tasks} onToggle={toggle} onGoSettings={() => setActive('settings')} />
+      <TodayStudy tasks={tasks} onToggle={toggle} onGoSettings={() => setActive('settings')} hasSchedule={hasSchedule} nextDate={nextDate} />
       <Countdown desktop={false} />
       <ImportantTasks />
       <QuickAdd onOpen={handleOpenQuick} desktop={false} />
@@ -906,7 +936,7 @@ export default function Home() {
       <Countdown desktop />
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 20, alignItems: 'start' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <TodayStudy tasks={tasks} onToggle={toggle} onGoSettings={() => setActive('settings')} />
+          <TodayStudy tasks={tasks} onToggle={toggle} onGoSettings={() => setActive('settings')} hasSchedule={hasSchedule} nextDate={nextDate} />
           <QuickAdd onOpen={handleOpenQuick} desktop />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>

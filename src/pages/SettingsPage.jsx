@@ -281,6 +281,31 @@ function ScheduleSection() {
 
       {/* 開始日設定 */}
       <div>
+        {/* STEP② 吹き出し — スケジュール未生成時のみ */}
+        {!meta && state !== 'done' && (
+          <div style={{ position: 'relative', display: 'inline-block', marginBottom: 10 }}>
+            <div style={{
+              background: 'var(--accent)', color: '#fff',
+              borderRadius: 10, padding: '8px 16px',
+              fontSize: 12.5, fontWeight: 700, lineHeight: 1.5,
+              display: 'flex', alignItems: 'center', gap: 8,
+            }}>
+              <span style={{
+                background: '#fff', color: 'var(--accent)',
+                borderRadius: 20, padding: '1px 8px',
+                fontSize: 11, fontWeight: 800, flexShrink: 0,
+              }}>STEP②</span>
+              学習開始日を選ぼう
+            </div>
+            <div style={{
+              position: 'absolute', bottom: -8, left: 24,
+              width: 0, height: 0,
+              borderLeft: '8px solid transparent',
+              borderRight: '8px solid transparent',
+              borderTop: '8px solid var(--accent)',
+            }} />
+          </div>
+        )}
         <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ink-2)', marginBottom: 8 }}>
           学習開始日
         </div>
@@ -328,7 +353,7 @@ function ScheduleSection() {
       {/* 生成ボタン */}
       {state !== 'error' ? (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
-          {/* STEP① 吹き出し — スケジュール未生成時のみ */}
+          {/* STEP③ 吹き出し — スケジュール未生成時のみ */}
           {!meta && state !== 'done' && (
             <div style={{ position: 'relative' }}>
               <div style={{
@@ -341,8 +366,8 @@ function ScheduleSection() {
                   background: '#fff', color: 'var(--accent)',
                   borderRadius: 20, padding: '1px 8px',
                   fontSize: 11, fontWeight: 800, flexShrink: 0,
-                }}>STEP①</span>
-                ここでスケジュールを生成しよう
+                }}>STEP③</span>
+                生成ボタンを押そう
               </div>
               <div style={{
                 position: 'absolute', bottom: -8, left: 24,

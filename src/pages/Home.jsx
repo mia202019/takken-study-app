@@ -1056,9 +1056,12 @@ function AuthedApp() {
     return () => window.removeEventListener('resize', handler);
   }, []);
 
-  // Google ログイン完了時に設定ページへ自動遷移
+  // Google ログイン完了時：スケジュール未設定なら設定ページ、設定済みならホームへ
   useEffect(() => {
-    const handler = () => setActive('settings');
+    const handler = () => {
+      const hasExistingSchedule = loadScheduledTasks().length > 0;
+      setActive(hasExistingSchedule ? 'home' : 'settings');
+    };
     window.addEventListener('takken-signed-in', handler);
     return () => window.removeEventListener('takken-signed-in', handler);
   }, []);

@@ -5,6 +5,7 @@ import {
   EXAM_DATE,
 } from '../data/scheduleData';
 import CloudSyncPanel from '../components/CloudSyncPanel';
+import { useCloudSync } from '../lib/CloudSyncContext';
 
 // ── Helpers ────────────────────────────────────────────────────────
 
@@ -363,6 +364,150 @@ function ScheduleSection() {
   );
 }
 
+// ── Data Reset Section ────────────────────────────────────────────
+
+function DataResetSection() {
+  const { manualSave } = useCloudSync();
+  const [step, setStep] = useState(0); // 0=通常 1=1回目確認 2=2回目確認 3=完了
+
+  const handleReset = async () => {
+    // takken- プレフィックスのキーをすべて削除
+    const keys = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('takken-')) keys.push(k);
+    }
+    keys.forEach(k => localStorage.removeItem(k));
+
+    // クラウドにも空状態を保存（上書き）
+    if (manualSave) await manualSave();
+
+    // UIを更新
+    window.dispatchEvent(new StorageEvent('storage', { key: null }));
+    setStep(3);
+  };
+
+  if (step === 3) {
+    return (
+      <div style={{
+        padding: '14px 16px', borderRadius: 10,
+        background: '#f0fff4', border: '1.5px solid var(--ok)',
+        fontSize: 13, color: '#276749', fontWeight: 600,
+      }}>
+        ✓ データをリセットしました。ページを再読み込みしてください。
+        <button
+          onClick={() => window.location.reload()}
+          style={{
+            display: 'block', marginTop: 10, padding: '8px 16px', borderRadius: 8,
+            border: 'none', cursor: 'pointer', background: 'var(--ok)', color: '#fff',
+            fontSize: 13, fontWeight: 700, fontFamily: 'inherit',
+          }}
+        >
+          再読み込み
+        </button>
+      </div>
+    );
+  }
+
+  if (step === 2) {
+    return (
+      <div style={{
+        padding: '16px', borderRadius: 10,
+        background: '#fff5f5', border: '1.5px solid #e53e3e',
+        display: 'flex', flexDirection: 'column', gap: 12,
+      }}>
+        <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#c53030' }}>
+          ⚠️ 最終確認：本当にリセットしますか？
+        </p>
+        <p style={{ margin: 0, fontSize: 12.5, color: '#742a2a', lineHeight: 1.7 }}>
+          スケジュール・間違いノート・復習データ・教材記録など、
+          このアカウントのすべての学習データが<strong>完全に削除</strong>されます。<br />
+          この操作は取り消せません。
+        </p>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button
+            onClick={() => setStep(0)}
+            style={{
+              flex: 1, padding: '10px', borderRadius: 9, border: '1.5px solid var(--line)',
+              background: 'var(--surface)', color: 'var(--ink-2)',
+              fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+            }}
+          >
+            キャンセル
+          </button>
+          <button
+            onClick={handleReset}
+            style={{
+              flex: 1, padding: '10px', borderRadius: 9, border: 'none',
+              background: '#e53e3e', color: '#fff',
+              fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+            }}
+          >
+            すべて削除する
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === 1) {
+    return (
+      <div style={{
+        padding: '16px', borderRadius: 10,
+        background: '#fffaf0', border: '1.5px solid #dd6b20',
+        display: 'flex', flexDirection: 'column', gap: 12,
+      }}>
+        <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: '#c05621' }}>
+          データをリセットしますか？
+        </p>
+        <p style={{ margin: 0, fontSize: 12.5, color: '#7b341e', lineHeight: 1.7 }}>
+          このアカウントの学習データがすべて削除されます。<br />
+          クラウド上のデータも上書きされます。
+        </p>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button
+            onClick={() => setStep(0)}
+            style={{
+              flex: 1, padding: '10px', borderRadius: 9, border: '1.5px solid var(--line)',
+              background: 'var(--surface)', color: 'var(--ink-2)',
+              fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+            }}
+          >
+            キャンセル
+          </button>
+          <button
+            onClick={() => setStep(2)}
+            style={{
+              flex: 1, padding: '10px', borderRadius: 9, border: 'none',
+              background: '#dd6b20', color: '#fff',
+              fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+            }}
+          >
+            続ける →
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // step === 0
+  return (
+    <button
+      onClick={() => setStep(1)}
+      style={{
+        width: '100%', padding: '11px', borderRadius: 10,
+        border: '1.5px solid #fc8181', background: 'transparent',
+        color: '#e53e3e', fontSize: 13, fontWeight: 700,
+        cursor: 'pointer', fontFamily: 'inherit',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+      }}
+    >
+      <Icon name="trash" size={15} stroke={2} />
+      データをリセット
+    </button>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
@@ -426,6 +571,15 @@ export default function SettingsPage() {
           <InfoRow label="データ保存先"   value="ブラウザ（localStorage）" />
           <InfoRow label="データ同期"     value="Googleアカウントでクラウド自動同期" />
         </div>
+      </div>
+
+      {/* Data reset */}
+      <div className="tk-card">
+        <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 6, color: '#c53030' }}>データリセット</div>
+        <p style={{ fontSize: 12.5, color: 'var(--ink-3)', lineHeight: 1.65, marginBottom: 14, margin: '0 0 14px' }}>
+          このアカウントのすべての学習データを削除します。
+        </p>
+        <DataResetSection />
       </div>
 
       {/* Data notes */}

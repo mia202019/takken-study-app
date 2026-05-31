@@ -526,7 +526,7 @@ function TodayStudy({ tasks, onToggle, onGoSettings, onGoMaterial, hasSchedule, 
   }
 
   return (
-    <div className="tk-card" style={{ borderTop: '3px solid var(--accent)' }}>
+    <div id="today-study" className="tk-card" style={{ borderTop: '3px solid var(--accent)' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
         <div>
           <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: 'var(--ink-1)' }}>今日の学習</h3>
@@ -1405,7 +1405,13 @@ function AuthedApp() {
     if (pageId === 'material') return <MaterialPage onGoSettings={() => setActive('settings')} />;
     if (pageId === 'analysis')  return <AnalysisPage />;
     if (pageId === 'library')   return <ResourcePage />;
-    if (pageId === 'settings')  return <SettingsPage onGoHome={() => setActive('home')} />;
+    if (pageId === 'settings')  return <SettingsPage onGoHome={() => {
+      setActive('home');
+      setTimeout(() => {
+        const el = document.getElementById('today-study');
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 120);
+    }} />;
     if (pageId === 'help')      return <HelpPage />;
     return <ComingSoon title={NAV.find(n => n.id === pageId)?.label || ''} />;
   }

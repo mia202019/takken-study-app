@@ -1170,25 +1170,42 @@ function LoginScreen() {
           <p style={{ margin: '6px 0 0', fontSize: 13, color: 'var(--ink-3)' }}>2026年度 宅地建物取引士試験</p>
         </div>
 
-        {/* アプリ基本情報 */}
-        <div className="tk-card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink-2)', marginBottom: 2 }}>アプリについて</div>
-          {[
-            { icon: 'calendar', text: '本試験日：2026年10月18日（日）' },
-            { icon: 'target',   text: '過去問・論点別演習スケジュールを自動生成' },
-            { icon: 'review',   text: '間違い記録・復習管理・弱点分析' },
-            { icon: 'note',     text: '法令・YouTube・教材リンク集' },
-          ].map((item, i) => (
-            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{
-                width: 30, height: 30, borderRadius: 8, background: 'var(--accent-bg)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-              }}>
-                <Icon name={item.icon} size={15} stroke={1.8} style={{ color: 'var(--accent)' }} />
-              </span>
-              <span style={{ fontSize: 13, color: 'var(--ink-2)' }}>{item.text}</span>
+        {/* アプリの目的 */}
+        <div className="tk-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--ink-1)', marginBottom: 6 }}>
+              宅建の勉強、何から始めればいい？
             </div>
-          ))}
+            <p style={{ margin: 0, fontSize: 13, color: 'var(--ink-2)', lineHeight: 1.8 }}>
+              このアプリは、<strong>宅建をはじめて学ぶ方</strong>のために作りました。<br />
+              使う教科書や問題集を選ぶだけで、<strong>今日から試験日まで「毎日何を・どのくらい勉強するか」</strong>を自動で作成します。
+            </p>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+            {[
+              { icon: 'book',     text: '使う教材を選ぶ（教科書・問題集・YouTube）' },
+              { icon: 'calendar', text: '開始日を決めて生成するだけ' },
+              { icon: 'check',    text: '毎日やるべきタスクが自動で表示' },
+              { icon: 'mistake',  text: '間違い記録・弱点分析で効率アップ' },
+            ].map((item, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <span style={{
+                  width: 30, height: 30, borderRadius: 8, background: 'var(--accent-bg)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                }}>
+                  <Icon name={item.icon} size={15} stroke={1.8} style={{ color: 'var(--accent)' }} />
+                </span>
+                <span style={{ fontSize: 13, color: 'var(--ink-2)' }}>{item.text}</span>
+              </div>
+            ))}
+          </div>
+          <div style={{
+            padding: '10px 14px', borderRadius: 10,
+            background: 'var(--accent-bg)',
+            fontSize: 12.5, color: 'var(--accent)', fontWeight: 600, lineHeight: 1.6,
+          }}>
+            📅 2026年10月18日（日）の本試験に向けて、<br />一緒に合格を目指しましょう。
+          </div>
         </div>
 
         {/* ログインカード */}
@@ -1280,6 +1297,112 @@ function GoogleIcon() {
   );
 }
 
+// ── Onboarding modal（初回ログイン時のみ）────────────────────────
+
+const LS_ONBOARDED_KEY = 'takken-onboarded';
+
+function OnboardingModal({ onClose, onGoMaterial }) {
+  const steps = [
+    {
+      badge: 'STEP①', icon: 'book',
+      title: '使う教材を選ぼう',
+      desc: '教科書・問題集・YouTube動画などを選択。今お手元にある教材でOKです。',
+    },
+    {
+      badge: 'STEP②', icon: 'calendar',
+      title: 'スケジュールを設定しよう',
+      desc: '学習開始日を決めて「生成」を押すだけ。今日から試験日まで毎日のタスクが自動で作られます。',
+    },
+    {
+      badge: 'STEP③④', icon: 'check',
+      title: 'あとはホームを見るだけ',
+      desc: '毎日ホームを開くと「今日の学習」が表示されます。タスクをこなすだけで合格に近づけます。',
+    },
+  ];
+  return (
+    <div
+      style={{
+        position: 'fixed', inset: 0, zIndex: 200,
+        background: 'rgba(30,24,16,.55)', backdropFilter: 'blur(4px)',
+        display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+        animation: 'tkFade .2s ease',
+        padding: '0 0 env(safe-area-inset-bottom)',
+      }}
+      onClick={onClose}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          width: '100%', maxWidth: 480,
+          background: 'var(--surface)', borderRadius: '24px 24px 0 0',
+          padding: '28px 24px 32px',
+          boxShadow: '0 -4px 40px rgba(30,24,16,.18)',
+          display: 'flex', flexDirection: 'column', gap: 0,
+          animation: 'tkSheetUp .3s cubic-bezier(.2,.8,.2,1)',
+        }}
+      >
+        {/* ハンドル */}
+        <div style={{ width: 40, height: 4, borderRadius: 4, background: 'var(--line-strong)', margin: '0 auto 20px' }} />
+
+        <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--ink-1)', marginBottom: 6 }}>
+          まず2つだけ設定しよう 🎯
+        </div>
+        <p style={{ margin: '0 0 22px', fontSize: 13, color: 'var(--ink-3)', lineHeight: 1.7 }}>
+          設定はたったの4ステップ。ホームの案内ボタン（STEP①〜④）に沿って進めるだけです。
+        </p>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginBottom: 24 }}>
+          {steps.map((s, i) => (
+            <div key={i} style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+              <div style={{
+                flexShrink: 0,
+                width: 40, height: 40, borderRadius: 12,
+                background: 'var(--accent-bg)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                <Icon name={s.icon} size={19} stroke={1.8} style={{ color: 'var(--accent)' }} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 3 }}>
+                  <span style={{
+                    background: '#f97316', color: '#fff',
+                    borderRadius: 20, padding: '1px 8px',
+                    fontSize: 10.5, fontWeight: 800,
+                  }}>{s.badge}</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink-1)' }}>{s.title}</span>
+                </div>
+                <p style={{ margin: 0, fontSize: 12.5, color: 'var(--ink-3)', lineHeight: 1.65 }}>{s.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <button
+          onClick={() => { onClose(); onGoMaterial(); }}
+          style={{
+            width: '100%', padding: '14px', borderRadius: 14, border: 'none',
+            background: 'var(--accent)', color: '#fff',
+            fontSize: 15, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          }}
+        >
+          <Icon name="book" size={17} stroke={2} /> STEP① 教材を選ぶ →
+        </button>
+        <button
+          onClick={onClose}
+          style={{
+            marginTop: 10, width: '100%', padding: '11px', borderRadius: 14,
+            border: '1.5px solid var(--line-strong)', background: 'transparent',
+            color: 'var(--ink-3)', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+          }}
+        >
+          あとで設定する
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── Root ──────────────────────────────────────────────────────────
 
 const VALID_PAGES = new Set(['home','map','review','mistake','material','analysis','library','settings','help']);
@@ -1313,6 +1436,15 @@ function AuthedApp() {
     window.addEventListener('storage', handler);
     return () => window.removeEventListener('storage', handler);
   }, []);
+
+  // 初回ログイン時のみオンボーディングを表示
+  const [showOnboarding, setShowOnboarding] = useState(
+    () => !localStorage.getItem(LS_ONBOARDED_KEY)
+  );
+  const closeOnboarding = () => {
+    localStorage.setItem(LS_ONBOARDED_KEY, '1');
+    setShowOnboarding(false);
+  };
 
   // active が変わったらURLハッシュを更新
   useEffect(() => {
@@ -1456,6 +1588,12 @@ function AuthedApp() {
         {sheet && <QuickAddSheet kind={sheet} mobile onClose={() => setSheet(null)} onSubmit={handleSubmit} />}
         {more && <MoreMenu active={active} onNav={setActive} onClose={() => setMore(false)} />}
         <Toast msg={toast} />
+        {showOnboarding && (
+          <OnboardingModal
+            onClose={closeOnboarding}
+            onGoMaterial={() => { closeOnboarding(); setActive('material'); }}
+          />
+        )}
       </div>
     );
   }
@@ -1490,6 +1628,12 @@ function AuthedApp() {
       </main>
       {sheet && <QuickAddSheet kind={sheet} mobile={false} onClose={() => setSheet(null)} onSubmit={handleSubmit} />}
       <Toast msg={toast} />
+      {showOnboarding && (
+        <OnboardingModal
+          onClose={closeOnboarding}
+          onGoMaterial={() => { closeOnboarding(); setActive('material'); }}
+        />
+      )}
     </div>
   );
 }

@@ -537,12 +537,12 @@ function TodayStudy({ tasks, onToggle, onGoSettings, onGoMaterial, hasSchedule, 
 
   return (
     <div id="today-study" style={{
-      borderRadius: 18, overflow: 'hidden',
-      boxShadow: '0 4px 20px rgba(44,74,140,.15), 0 1px 4px rgba(44,74,140,.08)',
-      background: 'var(--surface)',
+      borderRadius: 16,
+      boxShadow: '0 4px 24px rgba(44,74,140,.13), 0 1px 4px rgba(44,74,140,.07)',
     }}>
-      {/* ── カラーヘッダー ── */}
-      <div style={{ background: headerBg, padding: '18px 18px 14px', color: '#fff' }}>
+      {/* ── カラーヘッダー（上角丸） ── */}
+      <div style={{ background: headerBg, padding: '18px 18px 14px', color: '#fff',
+        borderRadius: '16px 16px 0 0' }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: tasks.length > 0 ? 14 : 0 }}>
           <div>
             <div style={{ fontSize: 12, opacity: 0.75, marginBottom: 3, letterSpacing: '.04em' }}>
@@ -584,8 +584,14 @@ function TodayStudy({ tasks, onToggle, onGoSettings, onGoMaterial, hasSchedule, 
         )}
       </div>
 
-      {/* ── タスク本体 ── */}
-      <div style={{ padding: '0 16px 4px' }}>
+      {/* ── タスク本体（下角丸・白背景） ── */}
+      <div style={{
+        padding: '0 16px 4px',
+        background: 'var(--surface)',
+        border: '1px solid var(--line)',
+        borderTop: 'none',
+        borderRadius: '0 0 16px 16px',
+      }}>
 
       {tasks.length === 0 && !hasSchedule && mats.length === 0 && (
         /* STEP① 教材未選択 */

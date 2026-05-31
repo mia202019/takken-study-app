@@ -30,56 +30,12 @@ export const UNIT_STATUSES = [
   { id: 'completed',    label: '完了',      color: 'var(--ok)',        bg: '#e8f5ec' },
 ];
 
-// ── デフォルト教材（初回起動時に投入） ────────────────────────────────
-
-const DEFAULT_MATERIALS = [
-  {
-    id: 'mat-1',
-    title: '2026年度版 みんなが欲しかった！宅建士の教科書',
-    type: 'textbook',
-    status: 'using',
-    memo: null,
-    createdAt: '2026-01-01T00:00:00.000Z',
-    updatedAt: '2026-01-01T00:00:00.000Z',
-  },
-  {
-    id: 'mat-2',
-    title: '2026年度版 みんなが欲しかった！宅建士の論点別過去問題集',
-    type: 'workbook',
-    status: 'using',
-    memo: null,
-    createdAt: '2026-01-01T00:00:00.000Z',
-    updatedAt: '2026-01-01T00:00:00.000Z',
-  },
-  {
-    id: 'mat-3',
-    title: '公式過去問',
-    type: 'website',
-    status: 'reference',
-    memo: null,
-    createdAt: '2026-01-01T00:00:00.000Z',
-    updatedAt: '2026-01-01T00:00:00.000Z',
-  },
-  {
-    id: 'mat-4',
-    title: 'YouTube補助教材',
-    type: 'video',
-    status: 'reference',
-    memo: null,
-    createdAt: '2026-01-01T00:00:00.000Z',
-    updatedAt: '2026-01-01T00:00:00.000Z',
-  },
-];
 
 // ── localStorage 読み書き ─────────────────────────────────────────
 
 export function loadMaterials() {
-  try {
-    const stored = localStorage.getItem(LS_MATERIALS_KEY);
-    if (stored) return JSON.parse(stored);
-    localStorage.setItem(LS_MATERIALS_KEY, JSON.stringify(DEFAULT_MATERIALS));
-    return DEFAULT_MATERIALS;
-  } catch { return DEFAULT_MATERIALS; }
+  try { return JSON.parse(localStorage.getItem(LS_MATERIALS_KEY)) || []; }
+  catch { return []; }
 }
 
 export function loadMaterialUnits() {
@@ -91,6 +47,38 @@ function saveMats(mats) {
   localStorage.setItem(LS_MATERIALS_KEY, JSON.stringify(mats));
   window.dispatchEvent(new StorageEvent('storage', { key: LS_MATERIALS_KEY }));
   return mats;
+}
+
+// カタログから教材＋全ユニットを一括追加
+export function addMaterialFromCatalog(catalogEntry) {
+  const now = new Date().toISOString();
+  const matId = `mat-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+  const material = {
+    id: matId,
+    title: catalogEntry.title,
+    type: catalogEntry.type,
+    status: catalogEntry.status || 'using',
+    memo: null,
+    createdAt: now,
+    updatedAt: now,
+  };
+  saveMats([...loadMaterials(), material]);
+
+  const newUnits = (catalogEntry.units || []).map((u, i) => ({
+    id: `mu-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 5)}`,
+    materialId: matId,
+    subjectId: u.subjectId,
+    topicId: u.topicId || null,
+    chapterTitle: u.chapterTitle,
+    pageRange: u.pageRange || null,
+    status: 'not_started',
+    estimatedMinutes: u.estimatedMinutes || null,
+    memo: null,
+    createdAt: now,
+    updatedAt: now,
+  }));
+  saveUnits([...loadMaterialUnits(), ...newUnits]);
+  return matId;
 }
 
 export function addMaterial(fields) {

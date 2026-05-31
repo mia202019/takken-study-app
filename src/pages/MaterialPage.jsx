@@ -8,8 +8,9 @@ import {
   loadMaterials, loadMaterialUnits,
   addMaterial, editMaterial, deleteMaterial,
   addMaterialUnit, editMaterialUnit, updateUnitStatus, deleteUnit,
-  computeMaterialStats,
+  computeMaterialStats, addMaterialFromCatalog,
 } from '../data/materialData';
+import { TEXTBOOK_CATALOG, catalogUnitSummary } from '../data/textbookCatalog';
 
 // ── Style helpers ─────────────────────────────────────────────────────
 
@@ -275,6 +276,209 @@ function UnitForm({ materials, initial, fixedMaterialId, onSave, onCancel }) {
           {initial ? '更新する' : '追加する'}
         </button>
       </div>
+    </div>
+  );
+}
+
+// ── Catalog ───────────────────────────────────────────────────────────
+
+const CAT_ORDER = ['gyo', 'kenri', 'horei', 'zei'];
+
+function CatalogCard({ entry, alreadyAdded, onPreview }) {
+  const summary = useMemo(() => catalogUnitSummary(entry), [entry]);
+  const total = entry.units.length;
+  const typeInfo = MATERIAL_TYPES.find(t => t.id === entry.type);
+
+  return (
+    <div style={{
+      background: 'var(--card-bg)', borderRadius: 14,
+      border: '1.5px solid var(--line)',
+      overflow: 'hidden',
+    }}>
+      <div style={{ padding: '14px 16px 12px' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+          <span style={{
+            width: 40, height: 40, borderRadius: 11, flexShrink: 0,
+            background: 'var(--accent-bg)', color: 'var(--accent)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <Icon name={typeInfo?.icon || 'book'} size={19} stroke={1.7} />
+          </span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink-1)', lineHeight: 1.35 }}>
+              {entry.shortTitle}
+            </div>
+            <div style={{ fontSize: 11.5, color: 'var(--ink-3)', marginTop: 2 }}>
+              {entry.publisher}　·　全{total}ユニット
+            </div>
+          </div>
+        </div>
+
+        <div style={{ fontSize: 12.5, color: 'var(--ink-2)', lineHeight: 1.6, margin: '10px 0 10px' }}>
+          {entry.description}
+        </div>
+
+        {/* 科目別ユニット数 */}
+        <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 12 }}>
+          {CAT_ORDER.map(catId => summary[catId] ? (
+            <span key={catId} style={{
+              padding: '2px 8px', borderRadius: 5, fontSize: 11, fontWeight: 600,
+              background: CAT[catId]?.bg, color: CAT[catId]?.fg,
+            }}>
+              {CAT[catId]?.label} {summary[catId]}
+            </span>
+          ) : null)}
+        </div>
+
+        {alreadyAdded ? (
+          <div style={{
+            padding: '8px 14px', borderRadius: 9, background: '#f0fff4',
+            color: 'var(--ok)', fontSize: 13, fontWeight: 600, textAlign: 'center',
+          }}>
+            ✓ 追加済み
+          </div>
+        ) : (
+          <button
+            onClick={() => onPreview(entry)}
+            style={{
+              width: '100%', padding: '10px', borderRadius: 9,
+              border: '1.5px solid var(--accent)', background: 'var(--accent-bg)',
+              color: 'var(--accent)', fontSize: 13, fontWeight: 700,
+              cursor: 'pointer', fontFamily: 'inherit',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            }}
+          >
+            <Icon name="book" size={14} stroke={2} />
+            ユニット一覧を見て追加
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// カタログプレビューシート（ユニット一覧 + 追加ボタン）
+function CatalogPreviewSheet({ entry, onAdd, onClose }) {
+  const summary = useMemo(() => catalogUnitSummary(entry), [entry]);
+  const total = entry.units.length;
+  const bySubject = useMemo(() => {
+    const groups = {};
+    entry.units.forEach(u => {
+      if (!groups[u.subjectId]) groups[u.subjectId] = [];
+      groups[u.subjectId].push(u);
+    });
+    return groups;
+  }, [entry]);
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 50,
+        background: 'rgba(40,32,24,.34)', backdropFilter: 'blur(2px)',
+        display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+        animation: 'tkFade .18s ease',
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          background: 'var(--surface)', width: '100%', maxWidth: 600,
+          borderRadius: '20px 20px 0 0',
+          padding: '8px 20px calc(32px + env(safe-area-inset-bottom))',
+          boxShadow: '0 -8px 40px rgba(40,30,20,.18)',
+          animation: 'tkSheetUp .26s cubic-bezier(.2,.8,.2,1)',
+          maxHeight: '90vh', overflowY: 'auto',
+        }}
+      >
+        <div style={{ width: 38, height: 4, borderRadius: 4, background: 'var(--line-strong)', margin: '0 auto 16px' }} />
+
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--ink-1)', lineHeight: 1.3 }}>{entry.title}</div>
+          <div style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 4 }}>全{total}ユニット</div>
+        </div>
+
+        {/* 科目別ユニット一覧 */}
+        {CAT_ORDER.filter(c => bySubject[c]).map(catId => (
+          <div key={catId} style={{ marginBottom: 16 }}>
+            <div style={{
+              fontSize: 12, fontWeight: 700, marginBottom: 8,
+              padding: '3px 10px', borderRadius: 6, display: 'inline-block',
+              background: CAT[catId]?.bg, color: CAT[catId]?.fg,
+            }}>
+              {CAT[catId]?.label}　{bySubject[catId].length}章
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {bySubject[catId].map((u, i) => (
+                <div key={i} style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  padding: '7px 10px', borderRadius: 8,
+                  background: 'var(--chip-neutral-bg)',
+                }}>
+                  <span style={{ fontSize: 11.5, color: 'var(--ink-1)', flex: 1 }}>{u.chapterTitle}</span>
+                  {u.estimatedMinutes && (
+                    <span style={{ fontSize: 11, color: 'var(--ink-4)', flexShrink: 0 }}>
+                      {u.estimatedMinutes}分
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+
+        <div style={{ fontSize: 11.5, color: 'var(--ink-4)', lineHeight: 1.6, marginBottom: 16 }}>
+          ※ 章構成は2026年度版の公開情報をもとに作成しています。実際の書籍と照合してユニットを編集・追加できます。
+        </div>
+
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button onClick={onClose} style={{
+            flex: 1, padding: '12px', borderRadius: 10, border: '1.5px solid var(--line)',
+            background: 'transparent', color: 'var(--ink-2)',
+            fontSize: 14, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+          }}>
+            キャンセル
+          </button>
+          <button onClick={() => onAdd(entry)} className="tk-btn-primary" style={{ flex: 2, padding: '12px' }}>
+            この教材を追加する
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// カタログ選択ビュー（教材ゼロのとき表示）
+function CatalogView({ addedIds, onPreview, onCustomAdd }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ fontSize: 13, color: 'var(--ink-2)', lineHeight: 1.7, padding: '0 2px' }}>
+        使用する教材を選択してください。選択した教材のユニット一覧が自動で作成されます。
+      </div>
+      {TEXTBOOK_CATALOG.map(entry => (
+        <CatalogCard
+          key={entry.id}
+          entry={entry}
+          alreadyAdded={addedIds.has(entry.id)}
+          onPreview={onPreview}
+        />
+      ))}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '4px 0' }}>
+        <div style={{ flex: 1, height: 1, background: 'var(--line)' }} />
+        <span style={{ fontSize: 12, color: 'var(--ink-4)' }}>または</span>
+        <div style={{ flex: 1, height: 1, background: 'var(--line)' }} />
+      </div>
+      <button
+        onClick={onCustomAdd}
+        style={{
+          width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          padding: '12px', borderRadius: 12, border: '1.5px dashed var(--line-strong)',
+          background: 'transparent', cursor: 'pointer', fontFamily: 'inherit',
+          fontSize: 13.5, fontWeight: 600, color: 'var(--ink-2)',
+        }}
+      >
+        <Icon name="plus" size={15} stroke={2.2} /> 教材をゼロから追加
+      </button>
     </div>
   );
 }
@@ -587,6 +791,14 @@ export default function MaterialPage() {
   const [addMatOpen, setAddMatOpen] = useState(false);
   const [editMatTarget, setEditMatTarget] = useState(null);
   const [editUnitTarget, setEditUnitTarget] = useState(null);
+  const [catalogPreview, setCatalogPreview] = useState(null); // catalog entry being previewed
+  const [showCatalogSheet, setShowCatalogSheet] = useState(false); // catalog sheet when materials exist
+
+  // カタログ追加済みIDセット（タイトルで照合）
+  const addedCatalogIds = useMemo(() => {
+    const titles = new Set(materials.map(m => m.title));
+    return new Set(TEXTBOOK_CATALOG.filter(e => titles.has(e.title)).map(e => e.id));
+  }, [materials]);
 
   useEffect(() => {
     const handler = (e) => {
@@ -618,6 +830,15 @@ export default function MaterialPage() {
     setMaterials(addMaterial(form));
     setAddMatOpen(false);
     flash('教材を追加しました');
+  }, [flash]);
+
+  const handleAddFromCatalog = useCallback((entry) => {
+    addMaterialFromCatalog(entry);
+    setMaterials(loadMaterials());
+    setUnits(loadMaterialUnits());
+    setCatalogPreview(null);
+    setShowCatalogSheet(false);
+    flash(`「${entry.shortTitle}」を追加しました（${entry.units.length}ユニット）`);
   }, [flash]);
 
   const handleEditMaterial = useCallback((form) => {
@@ -657,36 +878,85 @@ export default function MaterialPage() {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
-      {/* サマリー */}
-      <SummaryStrip stats={stats} />
-
-      {/* 教材リスト */}
-      {materials.map(m => (
-        <MaterialCard
-          key={m.id}
-          material={m}
-          units={unitsByMaterial[m.id] || []}
-          onAddUnit={handleAddUnit}
-          onEditUnit={setEditUnitTarget}
-          onDeleteUnit={handleDeleteUnit}
-          onStatusChange={handleStatusChange}
-          onEditMaterial={setEditMatTarget}
-          onDeleteMaterial={handleDeleteMaterial}
+      {materials.length === 0 ? (
+        /* ── 教材ゼロ：カタログ選択ビュー ── */
+        <CatalogView
+          addedIds={addedCatalogIds}
+          onPreview={setCatalogPreview}
+          onCustomAdd={() => setAddMatOpen(true)}
         />
-      ))}
+      ) : (
+        <>
+          {/* サマリー */}
+          <SummaryStrip stats={stats} />
 
-      {/* 教材を追加ボタン */}
-      <button
-        onClick={() => setAddMatOpen(true)}
-        style={{
-          width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-          padding: '13px', borderRadius: 12, border: '1.5px dashed var(--line-strong)',
-          background: 'transparent', cursor: 'pointer', fontFamily: 'inherit',
-          fontSize: 14, fontWeight: 600, color: 'var(--ink-2)',
-        }}
-      >
-        <Icon name="plus" size={16} stroke={2.2} /> 教材を追加
-      </button>
+          {/* 教材リスト */}
+          {materials.map(m => (
+            <MaterialCard
+              key={m.id}
+              material={m}
+              units={unitsByMaterial[m.id] || []}
+              onAddUnit={handleAddUnit}
+              onEditUnit={setEditUnitTarget}
+              onDeleteUnit={handleDeleteUnit}
+              onStatusChange={handleStatusChange}
+              onEditMaterial={setEditMatTarget}
+              onDeleteMaterial={handleDeleteMaterial}
+            />
+          ))}
+
+          {/* 追加ボタン群 */}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              onClick={() => setShowCatalogSheet(true)}
+              style={{
+                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+                padding: '12px', borderRadius: 12, border: '1.5px solid var(--accent)',
+                background: 'var(--accent-bg)', cursor: 'pointer', fontFamily: 'inherit',
+                fontSize: 13, fontWeight: 700, color: 'var(--accent)',
+              }}
+            >
+              <Icon name="book" size={15} stroke={2} /> カタログから追加
+            </button>
+            <button
+              onClick={() => setAddMatOpen(true)}
+              style={{
+                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+                padding: '12px', borderRadius: 12, border: '1.5px dashed var(--line-strong)',
+                background: 'transparent', cursor: 'pointer', fontFamily: 'inherit',
+                fontSize: 13, fontWeight: 600, color: 'var(--ink-2)',
+              }}
+            >
+              <Icon name="plus" size={15} stroke={2.2} /> ゼロから追加
+            </button>
+          </div>
+        </>
+      )}
+
+      {/* カタログプレビューシート（教材ゼロ時 or カタログから追加ボタン経由） */}
+      {catalogPreview && (
+        <CatalogPreviewSheet
+          entry={catalogPreview}
+          onAdd={handleAddFromCatalog}
+          onClose={() => setCatalogPreview(null)}
+        />
+      )}
+
+      {/* カタログ選択シート（教材あり時の「カタログから追加」ボタン用） */}
+      {showCatalogSheet && (
+        <BottomSheet title="教材カタログ" onClose={() => setShowCatalogSheet(false)}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {TEXTBOOK_CATALOG.map(entry => (
+              <CatalogCard
+                key={entry.id}
+                entry={entry}
+                alreadyAdded={addedCatalogIds.has(entry.id)}
+                onPreview={(e) => { setShowCatalogSheet(false); setCatalogPreview(e); }}
+              />
+            ))}
+          </div>
+        </BottomSheet>
+      )}
 
       {/* 教材追加シート */}
       {addMatOpen && (

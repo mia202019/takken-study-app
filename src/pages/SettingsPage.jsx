@@ -243,6 +243,72 @@ function ImportSection() {
 
 // ── Schedule ───────────────────────────────────────────────────────
 
+// ── カスタム日付ピッカー（iOS スクロール式でも過去日が選べないように） ──────
+function DateSelectPicker({ value, min, max, onChange }) {
+  const [minY, minM, minD] = min.split('-').map(Number);
+  const [maxY, maxM, maxD] = max.split('-').map(Number);
+  const [curY, curM, curD] = (value || min).split('-').map(Number);
+
+  // 有効な年の配列
+  const years = [];
+  for (let y = minY; y <= maxY; y++) years.push(y);
+
+  // 有効な月の配列（年に応じてフィルタ）
+  const months = [];
+  for (let m = 1; m <= 12; m++) {
+    if (curY === minY && m < minM) continue;
+    if (curY === maxY && m > maxM) continue;
+    months.push(m);
+  }
+
+  // 有効な日の配列（年月に応じてフィルタ）
+  const daysInMonth = new Date(curY, curM, 0).getDate();
+  const days = [];
+  for (let d = 1; d <= daysInMonth; d++) {
+    if (curY === minY && curM === minM && d < minD) continue;
+    if (curY === maxY && curM === maxM && d > maxD) continue;
+    days.push(d);
+  }
+
+  const emit = (y, m, d) => {
+    // 月が変わると日が範囲外になる場合を補正
+    const maxD2 = new Date(y, m, 0).getDate();
+    const safeD = Math.min(d, maxD2);
+    // min/max クランプ
+    let s = `${y}-${String(m).padStart(2,'0')}-${String(safeD).padStart(2,'0')}`;
+    if (s < min) s = min;
+    if (s > max) s = max;
+    onChange(s);
+  };
+
+  const sel = {
+    padding: '9px 4px', borderRadius: 10,
+    border: '1.5px solid var(--border, #ddd)',
+    background: 'var(--input-bg, #fff)',
+    color: 'var(--ink-1)',
+    fontSize: 15, fontFamily: 'inherit', cursor: 'pointer',
+    appearance: 'none', WebkitAppearance: 'none',
+    textAlign: 'center',
+  };
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+      <select value={curY} onChange={e => emit(Number(e.target.value), curM, curD)}
+        style={{ ...sel, width: 72 }}>
+        {years.map(y => <option key={y} value={y}>{y}年</option>)}
+      </select>
+      <select value={curM} onChange={e => emit(curY, Number(e.target.value), curD)}
+        style={{ ...sel, width: 58 }}>
+        {months.map(m => <option key={m} value={m}>{m}月</option>)}
+      </select>
+      <select value={curD} onChange={e => emit(curY, curM, Number(e.target.value))}
+        style={{ ...sel, width: 54 }}>
+        {days.map(d => <option key={d} value={d}>{d}日</option>)}
+      </select>
+    </div>
+  );
+}
+
 function ScheduleSection({ onGoHome }) {
   const [meta,      setMeta]      = useState(loadScheduleMeta);
   const [state,     setState]     = useState('idle'); // idle | done | error
@@ -328,26 +394,12 @@ function ScheduleSection({ onGoHome }) {
         <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ink-2)', marginBottom: 8 }}>
           学習開始日
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <input
-            type="date"
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <DateSelectPicker
             value={startDate}
             min={today}
             max={maxDate}
-            onChange={e => {
-              const v = e.target.value;
-              if (!v) return;
-              // 今日より前は today に、試験前日より後は maxDate にクランプ
-              setStartDate(v < today ? today : v > maxDate ? maxDate : v);
-            }}
-            style={{
-              padding: '9px 12px', borderRadius: 10,
-              border: '1.5px solid var(--border, #ddd)',
-              background: 'var(--input-bg, #fff)',
-              color: 'var(--ink-1)',
-              fontSize: 14, fontFamily: 'inherit',
-              cursor: 'pointer',
-            }}
+            onChange={setStartDate}
           />
           <span style={{ fontSize: 12.5, color: 'var(--ink-3)' }}>
             〜 2026年10月18日（本試験日）

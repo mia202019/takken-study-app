@@ -399,6 +399,23 @@ function CatalogPreviewSheet({ entry, onAdd, onClose }) {
           <div style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 4 }}>全{total}ユニット</div>
         </div>
 
+        {/* 購入が必要な教材への注意 */}
+        {(entry.type === 'textbook' || entry.type === 'workbook') && (
+          <div style={{
+            display: 'flex', gap: 10, alignItems: 'flex-start',
+            padding: '10px 12px', borderRadius: 10,
+            background: '#fff8e1', border: '1px solid #f6d860',
+            marginBottom: 16,
+          }}>
+            <span style={{ fontSize: 16, flexShrink: 0 }}>📖</span>
+            <div style={{ fontSize: 12, color: '#7a5f00', lineHeight: 1.65 }}>
+              <strong>別途ご購入が必要です。</strong><br />
+              このアプリには目次（章構成）のみ登録されています。実際の本文・解説・問題は書籍をご購入ください。<br />
+              <span style={{ fontWeight: 600 }}>購入済み、または購入予定の教材</span>を選んでください。
+            </div>
+          </div>
+        )}
+
         {/* 科目別ユニット一覧 */}
         {CAT_ORDER.filter(c => bySubject[c]).map(catId => (
           <div key={catId} style={{ marginBottom: 16 }}>
@@ -463,6 +480,17 @@ function CatalogView({ addedIds, onPreview, onCustomAdd }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ fontSize: 13, color: 'var(--ink-2)', lineHeight: 1.7, padding: '0 2px' }}>
         使用する教材を選択してください。選択した教材のユニット一覧が自動で作成されます。
+      </div>
+      <div style={{
+        display: 'flex', gap: 9, alignItems: 'flex-start',
+        padding: '10px 12px', borderRadius: 10,
+        background: '#fff8e1', border: '1px solid #f6d860',
+      }}>
+        <span style={{ fontSize: 15, flexShrink: 0 }}>📖</span>
+        <div style={{ fontSize: 12, color: '#7a5f00', lineHeight: 1.65 }}>
+          教科書・問題集は<strong>別途ご購入が必要</strong>です。アプリには目次のみ入っています。<br />
+          <span style={{ fontWeight: 600 }}>購入済み・購入予定のものを選んでください。</span>
+        </div>
       </div>
       {TEXTBOOK_CATALOG.map(entry => (
         <CatalogCard
@@ -617,6 +645,7 @@ function UnitCard({ unit, onStatusChange, onEdit, onDelete }) {
 
 function MaterialCard({ material, units, onAddUnit, onEditUnit, onDeleteUnit, onStatusChange, onEditMaterial, onDeleteMaterial }) {
   const [expanded, setExpanded] = useState(false);
+  const [unitsOpen, setUnitsOpen] = useState(false);
   const [addingUnit, setAddingUnit] = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
 
@@ -715,18 +744,44 @@ function MaterialCard({ material, units, onAddUnit, onEditUnit, onDeleteUnit, on
             )}
           </div>
 
-          {/* Unit list */}
+          {/* Unit list — 折りたたみ */}
           {units.length > 0 && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {units.map(unit => (
-                <UnitCard
-                  key={unit.id}
-                  unit={unit}
-                  onStatusChange={onStatusChange}
-                  onEdit={onEditUnit}
-                  onDelete={onDeleteUnit}
+            <div>
+              <button
+                onClick={() => setUnitsOpen(v => !v)}
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: '8px 12px', borderRadius: 9, border: 'none', cursor: 'pointer',
+                  background: 'var(--chip-neutral-bg)', fontFamily: 'inherit',
+                }}
+              >
+                <span style={{ fontSize: 12.5, fontWeight: 700, color: 'var(--ink-2)' }}>
+                  ユニット一覧（{units.length}件）
+                </span>
+                <Icon
+                  name="chevron"
+                  size={14}
+                  stroke={2}
+                  style={{
+                    color: 'var(--ink-3)',
+                    transform: unitsOpen ? 'rotate(270deg)' : 'rotate(90deg)',
+                    transition: 'transform .2s',
+                  }}
                 />
-              ))}
+              </button>
+              {unitsOpen && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+                  {units.map(unit => (
+                    <UnitCard
+                      key={unit.id}
+                      unit={unit}
+                      onStatusChange={onStatusChange}
+                      onEdit={onEditUnit}
+                      onDelete={onDeleteUnit}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -764,27 +819,59 @@ function MaterialCard({ material, units, onAddUnit, onEditUnit, onDeleteUnit, on
 
 // ── Summary strip ─────────────────────────────────────────────────────
 
-function SummaryStrip({ stats }) {
-  const items = [
-    { label: '全体',   value: stats.total,     warn: false },
-    { label: '完了',   value: stats.completed, warn: false },
-    { label: '復習必要', value: stats.needsReview, warn: true },
-    { label: '学習中', value: stats.inProgress, warn: false },
+function SummaryStrip({ materials }) {
+  // カタログ全体の種別カウント
+  const catalogCounts = useMemo(() => {
+    const c = { textbook: 0, workbook: 0, video: 0 };
+    TEXTBOOK_CATALOG.forEach(e => {
+      if (c[e.type] !== undefined) c[e.type]++;
+    });
+    return c;
+  }, []);
+
+  // ユーザーが選択済みの種別カウント
+  const selectedCounts = useMemo(() => {
+    const c = { textbook: 0, workbook: 0, video: 0 };
+    materials.forEach(m => {
+      if (c[m.type] !== undefined) c[m.type]++;
+    });
+    return c;
+  }, [materials]);
+
+  const rows = [
+    { type: 'textbook', icon: 'book',   label: '教科書', unit: '冊' },
+    { type: 'workbook', icon: 'target', label: '問題集', unit: '冊' },
+    { type: 'video',    icon: 'play',   label: '動画',   unit: '本' },
   ];
+
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
-      {items.map(it => (
-        <div key={it.label} style={{
-          background: it.warn && it.value > 0 ? 'var(--warn-bg)' : 'var(--chip-neutral-bg)',
-          borderRadius: 11, padding: '10px 8px', textAlign: 'center',
-        }}>
-          <div style={{
-            fontSize: 20, fontWeight: 700, lineHeight: 1.1, fontVariantNumeric: 'tabular-nums',
-            color: it.warn && it.value > 0 ? 'var(--warn)' : 'var(--ink-1)',
-          }}>{it.value}</div>
-          <div style={{ fontSize: 10.5, color: 'var(--ink-3)', marginTop: 2 }}>{it.label}</div>
-        </div>
-      ))}
+    <div className="tk-card" style={{ padding: '14px 16px' }}>
+      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--ink-3)', marginBottom: 12, letterSpacing: '.04em' }}>
+        教材の選択状況
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {rows.map(r => (
+          <div key={r.type} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{
+              width: 28, height: 28, borderRadius: 8, background: 'var(--accent-bg)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+            }}>
+              <Icon name={r.icon} size={13} stroke={1.8} style={{ color: 'var(--accent)' }} />
+            </span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-2)', flex: 1 }}>{r.label}</span>
+            <span style={{ fontSize: 13, color: 'var(--ink-3)' }}>
+              カタログ <span style={{ fontWeight: 700, color: 'var(--ink-1)' }}>{catalogCounts[r.type]}</span>{r.unit}
+            </span>
+            <span style={{ fontSize: 11, color: 'var(--ink-4)', margin: '0 4px' }}>→</span>
+            <span style={{
+              fontSize: 13, fontWeight: 700,
+              color: selectedCounts[r.type] > 0 ? 'var(--ok)' : 'var(--ink-4)',
+            }}>
+              選択済み {selectedCounts[r.type]}{r.unit}
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -903,7 +990,7 @@ export default function MaterialPage({ onGoSettings }) {
       ) : (
         <>
           {/* サマリー */}
-          <SummaryStrip stats={stats} />
+          <SummaryStrip materials={materials} />
 
           {/* 教材リスト */}
           {materials.map(m => (
@@ -946,6 +1033,21 @@ export default function MaterialPage({ onGoSettings }) {
             </button>
           </div>
         </>
+      )}
+
+      {/* 教材変更時の再生成注意 — 教材あり & スケジュール設定済み */}
+      {materials.length > 0 && hasSchedule && (
+        <div style={{
+          display: 'flex', gap: 10, alignItems: 'flex-start',
+          padding: '12px 14px', borderRadius: 12,
+          background: 'var(--warn-bg)', border: '1px solid var(--warn)',
+        }}>
+          <Icon name="note" size={15} stroke={1.8} style={{ color: 'var(--warn)', flexShrink: 0, marginTop: 1 }} />
+          <div style={{ fontSize: 12.5, color: 'var(--ink-2)', lineHeight: 1.7 }}>
+            <strong>教材を選び直した場合</strong>は、設定画面でスケジュールを<strong>再度生成</strong>してください。<br />
+            タスクの参考教材リンクが最新の選択内容に更新されます。
+          </div>
+        </div>
       )}
 
       {/* STEP② 案内バナー — 教材あり & スケジュール未設定 */}

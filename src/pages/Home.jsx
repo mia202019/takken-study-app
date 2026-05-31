@@ -294,19 +294,23 @@ function CoachBubble({ tasks, hasSchedule, hasMaterials, desktop }) {
     sub = `残り ${total - done} 件・約 ${remaining} 分。この調子でいきましょう。`;
   }
 
+  const iconName = isEvening ? 'moon' : 'sun';
+  const iconBg   = isEvening ? '#1e2a45' : 'var(--accent-bg)';
+  const iconColor= isEvening ? '#8ab4f8' : 'var(--accent)';
+
   return (
     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 11 }}>
       <span style={{
-        flexShrink: 0, width: desktop ? 44 : 38, height: desktop ? 44 : 38, borderRadius: '50%',
-        background: 'var(--accent-bg)', color: 'var(--accent)',
+        flexShrink: 0, width: desktop ? 44 : 40, height: desktop ? 44 : 40, borderRadius: '50%',
+        background: iconBg, color: iconColor,
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
-        <Icon name="sun" size={desktop ? 22 : 19} stroke={1.7} />
+        <Icon name={iconName} size={desktop ? 22 : 20} stroke={1.6} />
       </span>
       <div style={{
         position: 'relative', background: 'var(--surface)',
         border: '1px solid var(--line)', borderRadius: 14,
-        padding: desktop ? '12px 18px' : '11px 14px',
+        padding: desktop ? '12px 18px' : '12px 15px',
         maxWidth: desktop ? 560 : '100%',
         boxShadow: '0 1px 2px rgba(60,45,30,.04)',
       }}>
@@ -315,8 +319,8 @@ function CoachBubble({ tasks, hasSchedule, hasMaterials, desktop }) {
           background: 'var(--surface)', borderLeft: '1px solid var(--line)',
           borderBottom: '1px solid var(--line)', transform: 'rotate(45deg)',
         }} />
-        <div style={{ fontSize: desktop ? 18 : 16, fontWeight: 700, color: 'var(--ink-1)', letterSpacing: '-.01em', lineHeight: 1.35 }}>{msg}</div>
-        <div style={{ fontSize: desktop ? 13 : 12.5, color: 'var(--ink-3)', marginTop: 2, lineHeight: 1.4 }}>{sub}</div>
+        <div style={{ fontSize: desktop ? 18 : 17, fontWeight: 700, color: 'var(--ink-1)', letterSpacing: '-.01em', lineHeight: 1.35 }}>{msg}</div>
+        <div style={{ fontSize: desktop ? 13 : 13.5, color: 'var(--ink-3)', marginTop: 3, lineHeight: 1.5 }}>{sub}</div>
       </div>
     </div>
   );

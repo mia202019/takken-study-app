@@ -25,6 +25,7 @@ const PATHS = {
   help:  <><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 5 .5c0 1.5-2.5 2.5-2.5 4"/><circle cx="12" cy="17.5" r=".75" fill="currentColor" stroke="none"/></>,
   trash: <><path d="M4 7h16"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M5 7l1 12h12l1-12"/><path d="M9 7V4h6v3"/></>,
   play:  <><circle cx="12" cy="12" r="9"/><path d="M10 8.5l6 3.5-6 3.5z" fill="currentColor" stroke="none"/></>,
+  moon:  <><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" fill="currentColor" stroke="none" opacity=".15"/><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></>,
 };
 
 export default function Icon({ name, size = 20, stroke = 1.7, style = {} }) {

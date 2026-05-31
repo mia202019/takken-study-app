@@ -134,6 +134,8 @@ export function addMaterialUnit(fields) {
     topicId: fields.topicId || null,
     chapterTitle: fields.chapterTitle,
     pageRange: fields.pageRange || null,
+    url: fields.url || null,
+    keywords: fields.keywords || null,
     status: fields.status,
     estimatedMinutes: fields.estimatedMinutes ? Number(fields.estimatedMinutes) : null,
     memo: fields.memo || null,
@@ -153,6 +155,9 @@ export function editMaterialUnit(unitId, fields) {
     topicId: fields.topicId || null,
     chapterTitle: fields.chapterTitle,
     pageRange: fields.pageRange || null,
+    // url / keywords はカタログ由来の値を保持（UI 編集では上書きしない）
+    url: fields.url !== undefined ? fields.url : u.url,
+    keywords: fields.keywords !== undefined ? fields.keywords : u.keywords,
     status: fields.status,
     estimatedMinutes: fields.estimatedMinutes ? Number(fields.estimatedMinutes) : null,
     memo: fields.memo || null,

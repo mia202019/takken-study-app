@@ -31,8 +31,8 @@ function scoreUnit(unit, keyword) {
   if (title === keyword.replace(/\s/g, '')) return 2;
   // keywords との部分一致（互いに含む）
   if (kws.some(k => keyword.includes(k) || k.includes(keyword))) return 1;
-  // chapterTitle への部分一致
-  const parts = keyword.split(/[・\/\s・]+/).filter(w => w.length >= 2);
+  // chapterTitle への部分一致（1文字の漢字キーワード〈税・法 等〉も対象）
+  const parts = keyword.split(/[・\/\s・]+/).filter(w => w.length >= 1);
   if (parts.some(p => title.includes(p))) return 1;
 
   return 0;

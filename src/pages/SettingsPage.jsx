@@ -291,7 +291,8 @@ function ScheduleSection({ onGoHome }) {
   const fmtPeriod = (s, e) => {
     const [sy, sm, sd] = s.split('-');
     const [ey, em, ed] = e.split('-');
-    return `${sy}年${Number(sm)}月${Number(sd)}日〜${Number(em)}月${Number(ed)}日`;
+    const endYear = ey !== sy ? `${ey}年` : '';
+    return `${sy}年${Number(sm)}月${Number(sd)}日〜${endYear}${Number(em)}月${Number(ed)}日`;
   };
 
   return (

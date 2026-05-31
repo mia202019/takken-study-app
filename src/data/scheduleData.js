@@ -71,12 +71,19 @@ function getTopic(cat, idx) {
 // Phase 2: gyo40% / kenri30% / horei20% / zei10%
 // Phase 3: gyo35% / kenri25% / horei25% / zei15%
 const PHASE_CAT_CYCLE = {
-  1: ['gyo','gyo','gyo','gyo','gyo','kenri','kenri','kenri','kenri','horei',
-      'gyo','gyo','gyo','kenri','kenri','kenri','horei','gyo','zei','kenri'],
-  2: ['gyo','gyo','gyo','gyo','kenri','kenri','kenri','horei','horei','zei',
-      'gyo','gyo','gyo','kenri','kenri','horei','horei','gyo','zei','kenri'],
-  3: ['gyo','gyo','gyo','gyo','kenri','kenri','kenri','horei','horei','horei',
-      'gyo','gyo','kenri','kenri','horei','horei','zei','gyo','zei','kenri'],
+  // gyo×10, kenri×7, horei×2, zei×1 = 20  → 50/35/10/5
+  1: ['gyo','gyo','gyo','gyo','gyo','gyo','gyo','gyo','gyo','gyo',
+      'kenri','kenri','kenri','kenri','kenri','kenri','kenri',
+      'horei','horei','zei'],
+  // gyo×8, kenri×6, horei×4, zei×2 = 20  → 40/30/20/10
+  2: ['gyo','gyo','gyo','gyo','gyo','gyo','gyo','gyo',
+      'kenri','kenri','kenri','kenri','kenri','kenri',
+      'horei','horei','horei','horei','zei','zei'],
+  // gyo×7, kenri×5, horei×5, zei×3 = 20  → 35/25/25/15
+  3: ['gyo','gyo','gyo','gyo','gyo','gyo','gyo',
+      'kenri','kenri','kenri','kenri','kenri',
+      'horei','horei','horei','horei','horei',
+      'zei','zei','zei'],
 };
 
 // 直前モード（sprint）の10日サイクル
@@ -125,12 +132,13 @@ export function calculateDynamicPhases(studyStartDate, examDate) {
 
   // ─ 直前モード ─────────────────────────────────────────────────
   if (totalDays < 40) {
+    // 境界はすべて開始日前日（= どの日付も sprint 扱い）
+    const beforeStart = formatDate(new Date(start.getTime() - 86400000));
     return {
       mode: 'sprint',
       totalDays,
       days: { p1: 0, p2: 0, p3: 0, p4: 0, p5: totalDays },
-      boundaries: { p1: dateAfter(start, 0), p2: dateAfter(start, 0),
-                    p3: dateAfter(start, 0), p4: dateAfter(start, 0) },
+      boundaries: { p1: beforeStart, p2: beforeStart, p3: beforeStart, p4: beforeStart },
     };
   }
 
@@ -390,6 +398,8 @@ function saveScheduledTasks(tasks) {
 
 function saveScheduleMeta(meta) {
   localStorage.setItem(LS_SCHEDULE_META_KEY, JSON.stringify(meta));
+  // 同タブ内のリスナー（MaterialPage の hasSchedule 等）に通知
+  window.dispatchEvent(new StorageEvent('storage', { key: LS_SCHEDULE_META_KEY }));
 }
 
 // ── 生成 & 保存（重複防止マージ） ────────────────────────────────
@@ -450,7 +460,11 @@ export function processCarryover(doneMap, todayStr) {
   const lastDate = localStorage.getItem(LS_CARRYOVER_DATE_KEY) || '';
   if (lastDate >= todayStr) return false;
 
-  const tasks       = loadScheduledTasks();
+  // 日付昇順ソート → 同名タスクが複数あるとき最新日（日付が大きい）を保持する
+  const tasks = loadScheduledTasks()
+    .slice()
+    .sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
+
   const todayTitles = new Set(tasks.filter(t => t.date === todayStr).map(t => t.title));
   let changed       = false;
 

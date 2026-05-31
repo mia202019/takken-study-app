@@ -71,6 +71,8 @@ export function addMaterialFromCatalog(catalogEntry) {
     topicId: u.topicId || null,
     chapterTitle: u.chapterTitle,
     pageRange: u.pageRange || null,
+    url: u.url || null,
+    keywords: u.keywords || null,
     status: 'not_started',
     estimatedMinutes: u.estimatedMinutes || null,
     memo: null,

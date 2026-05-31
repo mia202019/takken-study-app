@@ -1,6 +1,12 @@
 // 教材カタログ — よく使われる宅建教材のプリセット
 // 章構成はTAC「みんなが欲しかった！宅建士」シリーズ2026年度版の公開情報をもとに作成。
 // 実際の書籍と照合して修正してください。
+// unit フィールド:
+//   chapterTitle      表示名
+//   subjectId         科目 (gyo / kenri / horei / zei)
+//   estimatedMinutes  学習目安 (任意)
+//   url               参照URL (任意) — video/website 系は必須
+//   keywords          タスクタイトルとの照合キーワード配列 (任意)
 
 export const TEXTBOOK_CATALOG = [
   {
@@ -110,6 +116,90 @@ export const TEXTBOOK_CATALOG = [
       { chapterTitle: '税②　所得税・印紙税・登録免許税',     subjectId: 'zei',   estimatedMinutes: 30 },
       { chapterTitle: 'その他①　地価公示・鑑定評価',         subjectId: 'zei',   estimatedMinutes: 25 },
       { chapterTitle: 'その他②　住宅金融・景品表示・統計',   subjectId: 'zei',   estimatedMinutes: 25 },
+    ],
+  },
+
+  // ── 公式過去問（RETIO）──────────────────────────────────────────────
+  {
+    id: 'cat-retio-kakomon',
+    title: '公式過去問（RETIO）',
+    shortTitle: '公式過去問',
+    publisher: '一般財団法人 不動産適正取引推進機構',
+    type: 'workbook',
+    status: 'using',
+    description: '宅建試験の公式過去問と正解番号。年度別に全問掲載。演習・答え合わせに活用。',
+    url: 'https://www.retio.or.jp/exam/past_ques_ans/other/',
+    units: [
+      {
+        chapterTitle: '権利関係 過去問', subjectId: 'kenri',
+        url: 'https://www.retio.or.jp/exam/past_ques_ans/other/',
+        keywords: ['意思表示', '代理', '時効', '債務不履行', '売買', '賃貸借', '借地借家法', '区分所有法', '相続', '抵当権', '権利関係'],
+      },
+      {
+        chapterTitle: '宅建業法 過去問', subjectId: 'gyo',
+        url: 'https://www.retio.or.jp/exam/past_ques_ans/other/',
+        keywords: ['免許', '宅建士', '営業保証金', '保証協会', '媒介契約', '重要事項説明', '37条書面', '8種制限', '報酬額', '監督処分', '罰則', '宅建業法'],
+      },
+      {
+        chapterTitle: '法令上の制限 過去問', subjectId: 'horei',
+        url: 'https://www.retio.or.jp/exam/past_ques_ans/other/',
+        keywords: ['都市計画法', '建築基準法', '国土利用計画法', '農地法', '宅地造成', '土地区画整理法', '法令'],
+      },
+      {
+        chapterTitle: '税・その他 過去問', subjectId: 'zei',
+        url: 'https://www.retio.or.jp/exam/past_ques_ans/other/',
+        keywords: ['不動産取得税', '固定資産税', '登録免許税', '印紙税', '地価公示', '不動産鑑定評価', '税'],
+      },
+    ],
+  },
+
+  // ── ゆーき大学（YouTube）─────────────────────────────────────────
+  {
+    id: 'cat-yuuki-youtube',
+    title: 'マジでイケてる宅建講座【ゆーき大学】',
+    shortTitle: 'ゆーき大学',
+    publisher: 'YouTube（ゆーき大学）',
+    type: 'video',
+    status: 'using',
+    description: '語呂合わせ・図解で暗記しやすい宅建講座。全科目を無料で視聴できる人気チャンネル。',
+    url: 'https://www.youtube.com/channel/UC9FTrf3ryoNxs01o_a2FE6g',
+    units: [
+      // 宅建業法
+      { chapterTitle: '免許',         subjectId: 'gyo',   keywords: ['免許'],         url: 'https://www.youtube.com/results?search_query=ゆーき大学+宅建+免許' },
+      { chapterTitle: '宅建士',        subjectId: 'gyo',   keywords: ['宅建士'],        url: 'https://www.youtube.com/results?search_query=ゆーき大学+宅建+宅建士' },
+      { chapterTitle: '営業保証金',    subjectId: 'gyo',   keywords: ['営業保証金'],    url: 'https://www.youtube.com/results?search_query=ゆーき大学+宅建+営業保証金' },
+      { chapterTitle: '保証協会',      subjectId: 'gyo',   keywords: ['保証協会'],      url: 'https://www.youtube.com/results?search_query=ゆーき大学+宅建+保証協会' },
+      { chapterTitle: '媒介契約',      subjectId: 'gyo',   keywords: ['媒介契約'],      url: 'https://www.youtube.com/results?search_query=ゆーき大学+宅建+媒介契約' },
+      { chapterTitle: '重要事項説明',  subjectId: 'gyo',   keywords: ['重要事項説明'],  url: 'https://www.youtube.com/results?search_query=ゆーき大学+宅建+重要事項説明' },
+      { chapterTitle: '37条書面',      subjectId: 'gyo',   keywords: ['37条書面'],      url: 'https://www.youtube.com/results?search_query=ゆーき大学+宅建+37条書面' },
+      { chapterTitle: '8種制限',       subjectId: 'gyo',   keywords: ['8種制限'],       url: 'https://www.youtube.com/results?search_query=ゆーき大学+宅建+8種制限' },
+      { chapterTitle: '報酬額',        subjectId: 'gyo',   keywords: ['報酬額'],        url: 'https://www.youtube.com/results?search_query=ゆーき大学+宅建+報酬額' },
+      { chapterTitle: '監督処分・罰則', subjectId: 'gyo',  keywords: ['監督処分', '罰則'], url: 'https://www.youtube.com/results?search_query=ゆーき大学+宅建+監督処分+罰則' },
+      // 権利関係
+      { chapterTitle: '意思表示',      subjectId: 'kenri', keywords: ['意思表示'],      url: 'https://www.youtube.com/results?search_query=ゆーき大学+宅建+意思表示' },
+      { chapterTitle: '代理',          subjectId: 'kenri', keywords: ['代理'],          url: 'https://www.youtube.com/results?search_query=ゆーき大学+宅建+代理' },
+      { chapterTitle: '時効',          subjectId: 'kenri', keywords: ['時効'],          url: 'https://www.youtube.com/results?search_query=ゆーき大学+宅建+時効' },
+      { chapterTitle: '債務不履行',    subjectId: 'kenri', keywords: ['債務不履行'],    url: 'https://www.youtube.com/results?search_query=ゆーき大学+宅建+債務不履行' },
+      { chapterTitle: '売買',          subjectId: 'kenri', keywords: ['売買'],          url: 'https://www.youtube.com/results?search_query=ゆーき大学+宅建+売買' },
+      { chapterTitle: '賃貸借',        subjectId: 'kenri', keywords: ['賃貸借'],        url: 'https://www.youtube.com/results?search_query=ゆーき大学+宅建+賃貸借' },
+      { chapterTitle: '借地借家法',    subjectId: 'kenri', keywords: ['借地借家法'],    url: 'https://www.youtube.com/results?search_query=ゆーき大学+宅建+借地借家法' },
+      { chapterTitle: '区分所有法',    subjectId: 'kenri', keywords: ['区分所有法'],    url: 'https://www.youtube.com/results?search_query=ゆーき大学+宅建+区分所有法' },
+      { chapterTitle: '相続',          subjectId: 'kenri', keywords: ['相続'],          url: 'https://www.youtube.com/results?search_query=ゆーき大学+宅建+相続' },
+      { chapterTitle: '抵当権',        subjectId: 'kenri', keywords: ['抵当権'],        url: 'https://www.youtube.com/results?search_query=ゆーき大学+宅建+抵当権' },
+      // 法令上の制限
+      { chapterTitle: '都市計画法',    subjectId: 'horei', keywords: ['都市計画法'],    url: 'https://www.youtube.com/results?search_query=ゆーき大学+宅建+都市計画法' },
+      { chapterTitle: '建築基準法',    subjectId: 'horei', keywords: ['建築基準法'],    url: 'https://www.youtube.com/results?search_query=ゆーき大学+宅建+建築基準法' },
+      { chapterTitle: '国土利用計画法', subjectId: 'horei', keywords: ['国土利用計画法'], url: 'https://www.youtube.com/results?search_query=ゆーき大学+宅建+国土利用計画法' },
+      { chapterTitle: '農地法',        subjectId: 'horei', keywords: ['農地法'],        url: 'https://www.youtube.com/results?search_query=ゆーき大学+宅建+農地法' },
+      { chapterTitle: '宅地造成等規制法', subjectId: 'horei', keywords: ['宅地造成', '盛土'], url: 'https://www.youtube.com/results?search_query=ゆーき大学+宅建+宅地造成+盛土規制法' },
+      { chapterTitle: '土地区画整理法', subjectId: 'horei', keywords: ['土地区画整理法'], url: 'https://www.youtube.com/results?search_query=ゆーき大学+宅建+土地区画整理法' },
+      // 税・その他
+      { chapterTitle: '不動産取得税',  subjectId: 'zei',   keywords: ['不動産取得税'],  url: 'https://www.youtube.com/results?search_query=ゆーき大学+宅建+不動産取得税' },
+      { chapterTitle: '固定資産税',    subjectId: 'zei',   keywords: ['固定資産税'],    url: 'https://www.youtube.com/results?search_query=ゆーき大学+宅建+固定資産税' },
+      { chapterTitle: '登録免許税',    subjectId: 'zei',   keywords: ['登録免許税'],    url: 'https://www.youtube.com/results?search_query=ゆーき大学+宅建+登録免許税' },
+      { chapterTitle: '印紙税',        subjectId: 'zei',   keywords: ['印紙税'],        url: 'https://www.youtube.com/results?search_query=ゆーき大学+宅建+印紙税' },
+      { chapterTitle: '地価公示',      subjectId: 'zei',   keywords: ['地価公示'],      url: 'https://www.youtube.com/results?search_query=ゆーき大学+宅建+地価公示' },
+      { chapterTitle: '不動産鑑定評価', subjectId: 'zei',  keywords: ['不動産鑑定評価'], url: 'https://www.youtube.com/results?search_query=ゆーき大学+宅建+不動産鑑定評価' },
     ],
   },
 ];

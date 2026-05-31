@@ -17,7 +17,8 @@ import AnalysisPage from './AnalysisPage';
 import SettingsPage from './SettingsPage';
 import HelpPage from './HelpPage';
 import { loadMistakeLogs, computeMistakeStats } from '../data/mistakeData';
-import { loadMaterialUnits, computeMaterialStats } from '../data/materialData';
+import { loadMaterialUnits, loadMaterials, computeMaterialStats, LS_MATERIALS_KEY, LS_UNITS_KEY } from '../data/materialData';
+import { buildMatLinksMap } from '../data/materialLinker';
 import { loadResources, computeResourceStats } from '../data/resourceData';
 import {
   loadScheduledTasks, getScheduledTasksForDate,
@@ -89,6 +90,68 @@ function TypeBadge({ type }) {
       <Icon name={t.icon} size={13} stroke={1.8} /> {t.label}
     </span>
   );
+}
+
+// アイコン名マッピング (MATERIAL_TYPES と揃える)
+const MAT_TYPE_ICON = {
+  textbook:  'book',
+  workbook:  'target',
+  video:     'bolt',
+  website:   'arrowRight',
+  mock_exam: 'note',
+  other:     'spark',
+};
+
+function MaterialChip({ item }) {
+  const { unit, material } = item;
+  const isVideo   = material.type === 'video';
+  const isLink    = !!(unit.url || material.url);
+  const href      = unit.url || material.url || '#';
+  const iconName  = MAT_TYPE_ICON[material.type] || 'spark';
+
+  // 表示テキスト: chapterTitle（長すぎる場合は短縮）
+  const label = unit.chapterTitle
+    ? unit.chapterTitle.length > 16
+      ? unit.chapterTitle.slice(0, 15) + '…'
+      : unit.chapterTitle
+    : material.title;
+
+  const chipStyle = {
+    display: 'inline-flex', alignItems: 'center', gap: 4,
+    padding: '3px 8px', borderRadius: 6,
+    fontSize: 11, fontWeight: 500, lineHeight: 1.3,
+    background: isVideo ? 'var(--carry-bg)'  : 'var(--chip-neutral-bg)',
+    color:      isVideo ? 'var(--carry)'     : 'var(--ink-3)',
+    border:     isVideo ? '1px solid var(--carry)' : '1px solid var(--line)',
+    textDecoration: 'none',
+    cursor: isLink ? 'pointer' : 'default',
+    flexShrink: 0,
+    userSelect: 'none',
+  };
+
+  const inner = (
+    <>
+      <Icon name={iconName} size={11} stroke={1.8} style={{ flexShrink: 0 }} />
+      <span style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        {label}
+      </span>
+    </>
+  );
+
+  if (isLink) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={e => e.stopPropagation()}
+        style={chipStyle}
+      >
+        {inner}
+      </a>
+    );
+  }
+  return <span style={chipStyle}>{inner}</span>;
 }
 
 function ProgressBar({ value, max, color = 'var(--accent)', h = 6 }) {
@@ -316,7 +379,7 @@ function ImportantTasks() {
 
 // ── Today's study ─────────────────────────────────────────────────
 
-function TaskRow({ task, onToggle }) {
+function TaskRow({ task, onToggle, matLinks = [] }) {
   return (
     <div onClick={() => onToggle(task.id)} style={{
       display: 'flex', alignItems: 'flex-start', gap: 12, padding: '13px 0', cursor: 'pointer',
@@ -366,6 +429,15 @@ function TaskRow({ task, onToggle }) {
             <span style={{ fontSize: 11.5, color: 'var(--ink-3)' }}>{task.topic}</span>
           )}
         </div>
+        {/* 参考教材チップ — 教材選択済みのときのみ表示 */}
+        {matLinks.length > 0 && (
+          <div
+            style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 6 }}
+            onClick={e => e.stopPropagation()}
+          >
+            {matLinks.map((x, i) => <MaterialChip key={i} item={x} />)}
+          </div>
+        )}
       </div>
       <span style={{ flexShrink: 0, fontSize: 13, color: 'var(--ink-2)', fontWeight: 600, fontVariantNumeric: 'tabular-nums', marginTop: 3 }}>
         {task.min}分
@@ -383,11 +455,28 @@ function StatChip({ label, value, accent }) {
   );
 }
 
-function TodayStudy({ tasks, onToggle, onGoSettings, hasSchedule, nextDate }) {
+function TodayStudy({ tasks, onToggle, onGoSettings, onGoMaterial, hasSchedule, nextDate }) {
   const done = tasks.filter(t => t.done).length;
   const remaining = tasks.filter(t => !t.done).reduce((a, t) => a + t.min, 0);
   const carryTasks = tasks.filter(t => t.carriedOver);
   const normal     = tasks.filter(t => !t.carriedOver);
+
+  // 教材ユニット紐付け — ユーザーが教材を追加している場合のみ有効
+  const [matUnits,  setMatUnits]  = useState(loadMaterialUnits);
+  const [mats,      setMats]      = useState(loadMaterials);
+  useEffect(() => {
+    const handler = (e) => {
+      if (!e.key || e.key === LS_UNITS_KEY)    setMatUnits(loadMaterialUnits());
+      if (!e.key || e.key === LS_MATERIALS_KEY) setMats(loadMaterials());
+    };
+    window.addEventListener('storage', handler);
+    return () => window.removeEventListener('storage', handler);
+  }, []);
+
+  const matLinksMap = useMemo(
+    () => buildMatLinksMap(tasks, matUnits, mats),
+    [tasks, matUnits, mats],
+  );
 
   // 開始待ちメッセージ用：次の学習日を人が読める形式に
   function fmtNextDate(d) {
@@ -414,15 +503,15 @@ function TodayStudy({ tasks, onToggle, onGoSettings, hasSchedule, nextDate }) {
         )}
       </div>
 
-      {tasks.length === 0 && !hasSchedule && (
-        /* ① スケジュール未生成 */
+      {tasks.length === 0 && !hasSchedule && mats.length === 0 && (
+        /* STEP① 教材未選択 */
         <div style={{ textAlign: 'center', padding: '12px 8px 8px' }}>
-          <Icon name="note" size={32} stroke={1.3} style={{ color: 'var(--ink-4)', display: 'block', margin: '0 auto 10px' }} />
+          <Icon name="book" size={32} stroke={1.3} style={{ color: 'var(--ink-4)', display: 'block', margin: '0 auto 10px' }} />
           <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink-2)', marginBottom: 6 }}>
-            学習スケジュールが未設定です
+            教材・スケジュールが未設定です
           </div>
           <div style={{ fontSize: 12.5, color: 'var(--ink-3)', lineHeight: 1.7, marginBottom: 18 }}>
-            設定画面でスケジュールを生成すると<br />今日のタスクがここに表示されます
+            使う教材を選んでから<br />スケジュールを生成しましょう
           </div>
 
           {/* STEP① 吹き出し */}
@@ -438,9 +527,84 @@ function TodayStudy({ tasks, onToggle, onGoSettings, hasSchedule, nextDate }) {
                 borderRadius: 20, padding: '1px 8px',
                 fontSize: 11, fontWeight: 800, flexShrink: 0,
               }}>STEP①</span>
-              まずはスケジュールを設定しよう
+              まず教材を選ぼう
             </div>
-            {/* 吹き出しの三角（下向き） */}
+            <div style={{
+              position: 'absolute', bottom: -8, left: '50%', transform: 'translateX(-50%)',
+              width: 0, height: 0,
+              borderLeft: '8px solid transparent',
+              borderRight: '8px solid transparent',
+              borderTop: '8px solid #f97316',
+            }} />
+          </div>
+
+          <div style={{ height: 8 }} />
+          <button
+            onClick={onGoMaterial}
+            style={{
+              padding: '10px 22px', borderRadius: 10, border: '2px solid #f97316', cursor: 'pointer',
+              background: '#fff', color: '#f97316',
+              fontSize: 13, fontWeight: 700, fontFamily: 'inherit',
+              boxShadow: '0 2px 8px rgba(0,0,0,.08)',
+            }}
+          >
+            教材を選ぶ →
+          </button>
+
+          {/* STEP② 予告（薄く表示） */}
+          <div style={{ marginTop: 22, opacity: 0.4 }}>
+            <div style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              background: '#f97316', color: '#fff',
+              borderRadius: 10, padding: '7px 14px',
+              fontSize: 12, fontWeight: 700,
+            }}>
+              <span style={{
+                background: '#fff', color: '#f97316',
+                borderRadius: 20, padding: '1px 7px',
+                fontSize: 10, fontWeight: 800, flexShrink: 0,
+              }}>STEP②</span>
+              スケジュールを設定しよう
+            </div>
+          </div>
+        </div>
+      )}
+
+      {tasks.length === 0 && !hasSchedule && mats.length > 0 && (
+        /* STEP② 教材選択済み・スケジュール未生成 */
+        <div style={{ textAlign: 'center', padding: '12px 8px 8px' }}>
+          {/* 教材選択済みバッジ */}
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            background: '#e8f5ec', color: 'var(--ok)',
+            borderRadius: 20, padding: '5px 14px',
+            fontSize: 12, fontWeight: 700, marginBottom: 16,
+          }}>
+            <Icon name="check" size={13} stroke={2.4} /> STEP① 教材選択済み
+          </div>
+
+          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink-2)', marginBottom: 6 }}>
+            学習スケジュールが未設定です
+          </div>
+          <div style={{ fontSize: 12.5, color: 'var(--ink-3)', lineHeight: 1.7, marginBottom: 18 }}>
+            設定画面でスケジュールを生成すると<br />今日のタスクがここに表示されます
+          </div>
+
+          {/* STEP② 吹き出し */}
+          <div style={{ position: 'relative', display: 'inline-block', marginBottom: 10 }}>
+            <div style={{
+              background: '#f97316', color: '#fff',
+              borderRadius: 10, padding: '8px 16px',
+              fontSize: 12.5, fontWeight: 700, lineHeight: 1.5,
+              display: 'flex', alignItems: 'center', gap: 8,
+            }}>
+              <span style={{
+                background: '#fff', color: '#f97316',
+                borderRadius: 20, padding: '1px 8px',
+                fontSize: 11, fontWeight: 800, flexShrink: 0,
+              }}>STEP②</span>
+              スケジュールを設定しよう
+            </div>
             <div style={{
               position: 'absolute', bottom: -8, left: '50%', transform: 'translateX(-50%)',
               width: 0, height: 0,
@@ -454,8 +618,8 @@ function TodayStudy({ tasks, onToggle, onGoSettings, hasSchedule, nextDate }) {
           <button
             onClick={onGoSettings}
             style={{
-              padding: '10px 22px', borderRadius: 10, border: '2px solid var(--accent)', cursor: 'pointer',
-              background: '#fff', color: 'var(--accent)',
+              padding: '10px 22px', borderRadius: 10, border: '2px solid #f97316', cursor: 'pointer',
+              background: '#fff', color: '#f97316',
               fontSize: 13, fontWeight: 700, fontFamily: 'inherit',
               boxShadow: '0 2px 8px rgba(0,0,0,.08)',
             }}
@@ -487,7 +651,7 @@ function TodayStudy({ tasks, onToggle, onGoSettings, hasSchedule, nextDate }) {
             <div>
               {carryTasks.map((t, i) => (
                 <div key={t.id} style={{ borderTop: i ? '1px solid var(--line)' : 'none' }}>
-                  <TaskRow task={t} onToggle={onToggle} />
+                  <TaskRow task={t} onToggle={onToggle} matLinks={matLinksMap[t.id] || []} />
                 </div>
               ))}
             </div>
@@ -495,7 +659,7 @@ function TodayStudy({ tasks, onToggle, onGoSettings, hasSchedule, nextDate }) {
           <div style={{ borderTop: carryTasks.length ? '1px solid var(--line)' : 'none' }}>
             {normal.map((t, i) => (
               <div key={t.id} style={{ borderTop: i ? '1px solid var(--line)' : 'none' }}>
-                <TaskRow task={t} onToggle={onToggle} />
+                <TaskRow task={t} onToggle={onToggle} matLinks={matLinksMap[t.id] || []} />
               </div>
             ))}
           </div>
@@ -1158,7 +1322,7 @@ function AuthedApp() {
   // Mobile layout: TodayStudy first, then rest
   const mobileHomeContent = (
     <>
-      <TodayStudy tasks={tasks} onToggle={toggle} onGoSettings={() => setActive('settings')} hasSchedule={hasSchedule} nextDate={nextDate} />
+      <TodayStudy tasks={tasks} onToggle={toggle} onGoSettings={() => setActive('settings')} onGoMaterial={() => setActive('material')} hasSchedule={hasSchedule} nextDate={nextDate} />
       <Countdown desktop={false} />
       <ImportantTasks />
       <QuickAdd onOpen={handleOpenQuick} desktop={false} />
@@ -1172,7 +1336,7 @@ function AuthedApp() {
       <Countdown desktop />
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 20, alignItems: 'start' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <TodayStudy tasks={tasks} onToggle={toggle} onGoSettings={() => setActive('settings')} hasSchedule={hasSchedule} nextDate={nextDate} />
+          <TodayStudy tasks={tasks} onToggle={toggle} onGoSettings={() => setActive('settings')} onGoMaterial={() => setActive('material')} hasSchedule={hasSchedule} nextDate={nextDate} />
           <QuickAdd onOpen={handleOpenQuick} desktop />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>

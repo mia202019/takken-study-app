@@ -348,8 +348,8 @@ function CatalogCard({ entry, alreadyAdded, onPreview }) {
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             }}
           >
-            <Icon name="book" size={14} stroke={2} />
-            ユニット一覧を見て追加
+            <Icon name={typeInfo?.icon || 'book'} size={14} stroke={2} />
+            {entry.type === 'video' ? 'トピック一覧を見て追加' : 'ユニット一覧を見て追加'}
           </button>
         )}
       </div>
@@ -406,7 +406,7 @@ function CatalogPreviewSheet({ entry, onAdd, onClose }) {
               padding: '3px 10px', borderRadius: 6, display: 'inline-block',
               background: CAT[catId]?.bg, color: CAT[catId]?.fg,
             }}>
-              {CAT[catId]?.label}　{bySubject[catId].length}章
+              {CAT[catId]?.label}　{bySubject[catId].length}{entry.type === 'video' ? 'トピック' : '章'}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               {bySubject[catId].map((u, i) => (
@@ -416,6 +416,14 @@ function CatalogPreviewSheet({ entry, onAdd, onClose }) {
                   background: 'var(--chip-neutral-bg)',
                 }}>
                   <span style={{ fontSize: 11.5, color: 'var(--ink-1)', flex: 1 }}>{u.chapterTitle}</span>
+                  {u.url && (
+                    <a href={u.url} target="_blank" rel="noopener noreferrer"
+                      onClick={e => e.stopPropagation()}
+                      style={{ flexShrink: 0, color: 'var(--accent)', display: 'flex', alignItems: 'center' }}
+                    >
+                      <Icon name="arrowRight" size={13} stroke={2} />
+                    </a>
+                  )}
                   {u.estimatedMinutes && (
                     <span style={{ fontSize: 11, color: 'var(--ink-4)', flexShrink: 0 }}>
                       {u.estimatedMinutes}分

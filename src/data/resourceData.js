@@ -36,8 +36,8 @@ const DEFAULT_RESOURCES = [
   { id: 'res-10', title: '棚田行政書士の不動産大学',                                type: 'youtube',  subjectId: null,    topicId: null, url: 'https://www.youtube.com/@fudousandaigaku',                                                           description: '宅建全科目をわかりやすく解説',              status: 'reference', memo: null },
   { id: 'res-11', title: 'ゆーき大学 宅建',                                        type: 'youtube',  subjectId: null,    topicId: null, url: 'https://www.youtube.com/channel/UC9FTrf3ryoNxs01o_a2FE6g',                                           description: '語呂合わせ・図解で暗記しやすい講義',        status: 'reference', memo: null },
   { id: 'res-12', title: '吉野塾',                                                  type: 'youtube',  subjectId: null,    topicId: null, url: 'https://www.youtube.com/channel/UCLPbvf6dLK3ta73C-fxSSKA',                                           description: '宅建合格実績多数・丁寧な解説',              status: 'reference', memo: null },
-  { id: 'res-13', title: '2026年度版 みんなが欲しかった！宅建士の教科書',           type: 'textbook', subjectId: null,    topicId: null, url: 'https://bookstore.tac-school.co.jp/book/detail/111927',                                              description: 'TAC出版・フルカラーで図解豊富',             status: 'using',     memo: null },
-  { id: 'res-14', title: '2026年度版 みんなが欲しかった！宅建士の論点別過去問題集', type: 'workbook', subjectId: null,    topicId: null, url: 'https://bookstore.tac-school.co.jp/book/detail/111928',                                              description: 'TAC出版・教科書とセットで使用',             status: 'using',     memo: null },
+  { id: 'res-13', title: '2026年度版 みんなが欲しかった！宅建士の教科書',           type: 'textbook', subjectId: null,    topicId: null, url: 'https://bookstore.tac-school.co.jp/book/detail/111927',                                              description: 'TAC出版・フルカラーで図解豊富',             status: 'reference', memo: null },
+  { id: 'res-14', title: '2026年度版 みんなが欲しかった！宅建士の論点別過去問題集', type: 'workbook', subjectId: null,    topicId: null, url: 'https://bookstore.tac-school.co.jp/book/detail/111928',                                              description: 'TAC出版・教科書とセットで使用',             status: 'reference', memo: null },
 ].map(r => ({ ...r, createdAt: TS, updatedAt: TS }));
 
 // ── URL マイグレーション（既存ユーザーのデフォルトリソースにURLを補完） ───
@@ -46,20 +46,29 @@ const DEFAULT_URL_MAP = Object.fromEntries(
   DEFAULT_RESOURCES.map(r => [r.id, { url: r.url, description: r.description }])
 );
 
+// res-13/14 のデフォルト status を 'using' → 'reference' に修正
+const MIGRATE_STATUS = { 'res-13': 'reference', 'res-14': 'reference' };
+
 function migrateUrls(list) {
   let changed = false;
   const updated = list.map(r => {
     const def = DEFAULT_URL_MAP[r.id];
-    if (!def) return r;
-    const needsUrl  = !r.url  && def.url;
-    const needsDesc = !r.description && def.description;
-    if (!needsUrl && !needsDesc) return r;
-    changed = true;
-    return {
-      ...r,
-      url:         needsUrl  ? def.url         : r.url,
-      description: needsDesc ? def.description : r.description,
-    };
+    let next = r;
+    if (def) {
+      const needsUrl  = !r.url  && def.url;
+      const needsDesc = !r.description && def.description;
+      if (needsUrl || needsDesc) {
+        changed = true;
+        next = { ...next, url: needsUrl ? def.url : r.url, description: needsDesc ? def.description : r.description };
+      }
+    }
+    // status マイグレーション：旧 'using' → 'reference'
+    const targetStatus = MIGRATE_STATUS[r.id];
+    if (targetStatus && r.status === 'using') {
+      changed = true;
+      next = { ...next, status: targetStatus };
+    }
+    return next;
   });
   return { updated, changed };
 }

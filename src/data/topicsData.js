@@ -93,20 +93,19 @@ export function adjustLevelForMistake(topicId, result) {
 
 // 苦手論点TOP3: 理解度が低い順（0=未着手は最後尾）
 export function computeWeakTopics(levels, count = 3) {
-  const scored = ALL_TOPICS.map(t => ({ ...t, level: levels[t.id] ?? 0 }));
+  // 着手済み（level > 0）かつ理解度が低い（level <= 3）トピックのみ対象
+  // 未着手（level === 0）はここに出さない → 「まだ記録なし」で表示
+  const weak = ALL_TOPICS
+    .map(t => ({ ...t, level: levels[t.id] ?? 0 }))
+    .filter(t => t.level > 0 && t.level <= 3)
+    .sort((a, b) => a.level - b.level)
+    .slice(0, count);
 
-  // 1〜3 = 苦手候補（着手済みだが低理解）、次に 0（未着手）
-  const studied = scored.filter(t => t.level > 0 && t.level <= 3).sort((a, b) => a.level - b.level);
-  const untouched = scored.filter(t => t.level === 0);
-
-  const combined = [...studied, ...untouched].slice(0, count);
-
-  return combined.map((t, i) => ({
+  return weak.map((t, i) => ({
     rank: i + 1,
     topic: t.title,
     cat: t.cat,
     level: t.level,
-    // ミス率：理解度が低いほど高い (level 0=未着手 → 表示として100、level 5 → 0)
-    missRate: t.level === 0 ? null : Math.round((5 - t.level) / 4 * 100),
+    missRate: Math.round((5 - t.level) / 4 * 100),
   }));
 }

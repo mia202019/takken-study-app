@@ -561,12 +561,29 @@ function TopReasonStat({ reason }) {
   );
 }
 
+// 今週（月曜始まり）の完了タスク合計時間を計算
+function computeWeeklyDoneHours() {
+  const tasks = loadScheduledTasks();
+  const now = new Date();
+  // 月曜日起点の週開始日
+  const day = now.getDay(); // 0=日
+  const diffToMon = (day === 0 ? -6 : 1 - day);
+  const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diffToMon);
+  const weekStartStr = `${weekStart.getFullYear()}-${String(weekStart.getMonth()+1).padStart(2,'0')}-${String(weekStart.getDate()).padStart(2,'0')}`;
+  const todayStr = TODAY_STR;
+  const minutes = tasks
+    .filter(t => t.done && t.date >= weekStartStr && t.date <= todayStr)
+    .reduce((s, t) => s + (t.min || 0), 0);
+  return Math.round(minutes / 6) / 10; // 分→時間（小数1桁）
+}
+
 function StatusSummary({ remainingMin }) {
   const [levels, setLevels] = useState(loadLevels);
   const [reviewItems, setReviewItems] = useState(loadReviewItems);
   const [mistakeLogs, setMistakeLogs] = useState(loadMistakeLogs);
   const [materialUnits, setMaterialUnits] = useState(loadMaterialUnits);
   const [resources, setResources] = useState(loadResources);
+  const [weeklyDone, setWeeklyDone] = useState(computeWeeklyDoneHours);
   useEffect(() => {
     const handler = () => {
       setLevels(loadLevels());
@@ -574,6 +591,7 @@ function StatusSummary({ remainingMin }) {
       setMistakeLogs(loadMistakeLogs());
       setMaterialUnits(loadMaterialUnits());
       setResources(loadResources());
+      setWeeklyDone(computeWeeklyDoneHours());
     };
     window.addEventListener('storage', handler);
     return () => window.removeEventListener('storage', handler);
@@ -611,9 +629,9 @@ function StatusSummary({ remainingMin }) {
       <div style={{ marginBottom: 16 }}>
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 7 }}>
           <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ink-2)' }}>今週の進捗</span>
-          <span style={{ fontSize: 12, color: 'var(--ink-3)', fontVariantNumeric: 'tabular-nums' }}>{EXAM.weeklyDoneH} / {EXAM.weeklyGoalH} 時間</span>
+          <span style={{ fontSize: 12, color: 'var(--ink-3)', fontVariantNumeric: 'tabular-nums' }}>{weeklyDone} / {EXAM.weeklyGoalH} 時間</span>
         </div>
-        <ProgressBar value={EXAM.weeklyDoneH} max={EXAM.weeklyGoalH} />
+        <ProgressBar value={weeklyDone} max={EXAM.weeklyGoalH} />
       </div>
       <div>
         <div style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--ink-2)', marginBottom: 10 }}>苦手論点 TOP3</div>

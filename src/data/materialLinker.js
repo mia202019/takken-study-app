@@ -75,19 +75,17 @@ export function findUnitsForTask(task, allUnits, allMaterials) {
     if (!best[mid] || x.score > best[mid].score) best[mid] = x;
   });
 
+  // 表示順: 教科書 → 問題集 → YouTube動画 → ウェブ / 模試 → その他
+  const TYPE_ORDER = { textbook: 0, workbook: 1, video: 2, website: 3, mock_exam: 4, other: 5 };
+
   return Object.values(best)
     .filter(x => {
-      // video 系はトピック一致がある場合のみ表示（無関係な動画リンクを出さない）
       if (x.material.type === 'video') return x.score > 0;
-      // その他（textbook / workbook / website）は科目一致だけで表示
       return true;
     })
-    .sort((a, b) => {
-      // score 降順 → video を後ろ（最後に参考リンクとして添える）
-      if (b.score !== a.score) return b.score - a.score;
-      const typeOrder = { textbook: 0, workbook: 1, website: 2, mock_exam: 3, video: 4, other: 5 };
-      return (typeOrder[a.material.type] ?? 9) - (typeOrder[b.material.type] ?? 9);
-    });
+    .sort((a, b) =>
+      (TYPE_ORDER[a.material.type] ?? 9) - (TYPE_ORDER[b.material.type] ?? 9)
+    );
 }
 
 /**

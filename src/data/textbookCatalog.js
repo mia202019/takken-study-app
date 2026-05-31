@@ -12,7 +12,7 @@ export const TEXTBOOK_CATALOG = [
   {
     id: 'cat-tac-kyokasho-2026',
     title: '2026年度版 みんなが欲しかった！宅建士の教科書',
-    shortTitle: '2026みんなの宅建 教科書',
+    shortTitle: '2026みんなの宅建',
     publisher: 'TAC出版',
     type: 'textbook',
     status: 'using',
@@ -82,7 +82,7 @@ export const TEXTBOOK_CATALOG = [
   {
     id: 'cat-tac-mondaishu-2026',
     title: '2026年度版 みんなが欲しかった！宅建士の論点別過去問題集',
-    shortTitle: '2026みんなの宅建 問題集',
+    shortTitle: '2026みんなの宅建',
     publisher: 'TAC出版',
     type: 'workbook',
     status: 'using',

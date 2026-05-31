@@ -770,16 +770,17 @@ function TopReasonStat({ reason }) {
 
 // 今週（月曜始まり）の完了タスク合計時間を計算
 function computeWeeklyDoneHours() {
-  const tasks = loadScheduledTasks();
-  const now = new Date();
+  const tasks   = loadScheduledTasks();
+  const doneMap = loadDoneState(); // takken-task-done から完了状態を取得
+  const now     = new Date();
   // 月曜日起点の週開始日
-  const day = now.getDay(); // 0=日
-  const diffToMon = (day === 0 ? -6 : 1 - day);
-  const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diffToMon);
+  const day        = now.getDay();
+  const diffToMon  = (day === 0 ? -6 : 1 - day);
+  const weekStart  = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diffToMon);
   const weekStartStr = `${weekStart.getFullYear()}-${String(weekStart.getMonth()+1).padStart(2,'0')}-${String(weekStart.getDate()).padStart(2,'0')}`;
-  const todayStr = TODAY_STR;
+  const todayStr   = TODAY_STR;
   const minutes = tasks
-    .filter(t => t.done && t.date >= weekStartStr && t.date <= todayStr)
+    .filter(t => !!doneMap[t.id] && t.date >= weekStartStr && t.date <= todayStr)
     .reduce((s, t) => s + (t.min || 0), 0);
   return Math.round(minutes / 6) / 10; // 分→時間（小数1桁）
 }
@@ -1473,6 +1474,8 @@ function AuthedApp() {
       localStorage.setItem(LS_ONBOARDED_KEY, '1');
       return false;
     }
+    // 表示すると決めた時点でキーをセット → タブを閉じても再表示しない
+    localStorage.setItem(LS_ONBOARDED_KEY, '1');
     return true;
   });
   const closeOnboarding = () => {

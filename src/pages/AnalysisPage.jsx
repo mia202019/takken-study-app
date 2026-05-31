@@ -19,15 +19,16 @@ function loadTaskDone() {
 
 // 今週（月曜始まり）の完了タスク学習時間を実データから計算
 function computeWeeklyDoneH() {
-  const tasks = loadScheduledTasks();
-  const now   = new Date();
-  const day   = now.getDay();
+  const tasks   = loadScheduledTasks();
+  const doneMap = loadTaskDone(); // takken-task-done から完了状態を取得
+  const now     = new Date();
+  const day     = now.getDay();
   const diffToMon = (day === 0 ? -6 : 1 - day);
   const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diffToMon);
   const ws = `${weekStart.getFullYear()}-${String(weekStart.getMonth()+1).padStart(2,'0')}-${String(weekStart.getDate()).padStart(2,'0')}`;
   const ts = TODAY;
   const minutes = tasks
-    .filter(t => t.done && t.date >= ws && t.date <= ts)
+    .filter(t => !!doneMap[t.id] && t.date >= ws && t.date <= ts)
     .reduce((s, t) => s + (t.min || 0), 0);
   return Math.round(minutes / 6) / 10;
 }

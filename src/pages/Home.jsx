@@ -1405,7 +1405,7 @@ function AuthedApp() {
     if (pageId === 'material') return <MaterialPage onGoSettings={() => setActive('settings')} />;
     if (pageId === 'analysis')  return <AnalysisPage />;
     if (pageId === 'library')   return <ResourcePage />;
-    if (pageId === 'settings')  return <SettingsPage />;
+    if (pageId === 'settings')  return <SettingsPage onGoHome={() => setActive('home')} />;
     if (pageId === 'help')      return <HelpPage />;
     return <ComingSoon title={NAV.find(n => n.id === pageId)?.label || ''} />;
   }

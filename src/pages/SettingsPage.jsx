@@ -243,11 +243,13 @@ function ImportSection() {
 
 // ── Schedule ───────────────────────────────────────────────────────
 
-function ScheduleSection() {
+function ScheduleSection({ onGoHome }) {
   const [meta,      setMeta]      = useState(loadScheduleMeta);
   const [startDate, setStartDate] = useState(loadStudyStart);
   const [state,     setState]     = useState('idle'); // idle | done | error
   const [errorMsg,  setErrorMsg]  = useState('');
+  const [showDoneModal, setShowDoneModal] = useState(false);
+  const [doneInfo, setDoneInfo] = useState(null); // { startDate }
 
   // 今日〜試験前日の範囲に制限
   const today   = fmtDate(new Date());
@@ -263,11 +265,17 @@ function ScheduleSection() {
       const result = generateAndSave(startDate);
       setMeta(result);
       setState('done');
-      setTimeout(() => setState('idle'), 3000);
+      setDoneInfo({ startDate });
+      setShowDoneModal(true);
     } catch (err) {
       setErrorMsg(err.message || 'スケジュール生成に失敗しました');
       setState('error');
     }
+  };
+
+  const handleGoHome = () => {
+    setShowDoneModal(false);
+    if (onGoHome) onGoHome();
   };
 
   const fmtPeriod = (s, e) => {
@@ -408,10 +416,72 @@ function ScheduleSection() {
         <Icon name="note" size={13} stroke={1.7} style={{ marginTop: 1, flexShrink: 0 }} />
         <span>
           既存タスク・手動追加タスクは上書きされません。<br />
-          同じ日付・同じタイトルのタスクは重複作成されません。<br />
-          生成後、ホームの「今日の学習」に当日のタスクが表示されます。
+          同じ日付・同じタイトルのタスクは重複作成されません。
         </span>
       </div>
+
+      {/* ── 生成完了モーダル ── */}
+      {showDoneModal && doneInfo && (
+        <div
+          style={{
+            position: 'fixed', inset: 0, zIndex: 100,
+            background: 'rgba(30,24,16,.5)', backdropFilter: 'blur(3px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: 24, animation: 'tkFade .2s ease',
+          }}
+          onClick={handleGoHome}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              width: '100%', maxWidth: 360,
+              background: 'var(--surface)', borderRadius: 20,
+              padding: '32px 28px 28px',
+              boxShadow: '0 20px 60px rgba(30,24,16,.22)',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16,
+              animation: 'tkSheetUp .28s cubic-bezier(.2,.8,.2,1)',
+            }}
+          >
+            {/* ✓ アイコン */}
+            <div style={{
+              width: 64, height: 64, borderRadius: '50%',
+              background: '#e8f5ec',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              marginBottom: 4,
+            }}>
+              <Icon name="check" size={32} stroke={2.4} style={{ color: 'var(--ok)' }} />
+            </div>
+
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--ink-1)', marginBottom: 10 }}>
+                スケジュール生成完了！
+              </div>
+              <div style={{ fontSize: 14, color: 'var(--ink-2)', lineHeight: 1.75 }}>
+                {(() => {
+                  const [y, m, d] = doneInfo.startDate.split('-');
+                  return `${Number(m)}月${Number(d)}日`;
+                })()}から本試験日まで、<br />
+                毎日の学習タスクをホーム画面に<br />
+                表示します。
+              </div>
+            </div>
+
+            <button
+              onClick={handleGoHome}
+              style={{
+                marginTop: 8, width: '100%',
+                padding: '14px', borderRadius: 12, border: 'none',
+                background: 'var(--accent)', color: '#fff',
+                fontSize: 15, fontWeight: 700, cursor: 'pointer',
+                fontFamily: 'inherit',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              }}
+            >
+              <Icon name="home" size={17} stroke={2} /> ホームで確認する
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -562,7 +632,7 @@ function DataResetSection() {
 
 // ── Page ──────────────────────────────────────────────────────────
 
-export default function SettingsPage() {
+export default function SettingsPage({ onGoHome }) {
   const keyCount = useMemo(() => {
     let n = 0;
     for (let i = 0; i < localStorage.length; i++) {
@@ -585,7 +655,7 @@ export default function SettingsPage() {
           任意の開始日〜2026年10月18日（本試験日）の日次学習タスクを自動生成します。<br />
           フェーズごとに科目・タスク種別を切り替え、毎日「何をやるか」をガイドします。
         </div>
-        <ScheduleSection />
+        <ScheduleSection onGoHome={onGoHome} />
       </div>
 
       {/* Backup section */}

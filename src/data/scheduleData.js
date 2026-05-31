@@ -45,7 +45,7 @@ const TOPIC_TITLES = {
 // 復習タスクのサブ科目
 const SEC_CAT = { gyo: 'kenri', kenri: 'gyo', horei: 'kenri', zei: 'gyo' };
 
-// 科目ローテーション（length=20、各フェーズの比重に対応）
+// 科目ローテーション（length=20）
 // Phase 1: gyo50 / kenri35 / horei10 / zei5
 // Phase 2: gyo40 / kenri30 / horei20 / zei10
 // Phase 3: gyo35 / kenri25 / horei25 / zei15
@@ -70,14 +70,6 @@ function isWeekend(date) {
   return w === 0 || w === 6;
 }
 
-function getPhaseId(dateStr) {
-  if (dateStr <= '2026-06-30') return 1;
-  if (dateStr <= '2026-07-31') return 2;
-  if (dateStr <= '2026-08-31') return 3;
-  if (dateStr <= '2026-09-30') return 4;
-  return 5;
-}
-
 // 科目ごとのトピック名を cycleIndex でローテーション
 function getTopic(cat, idx) {
   const list = TOPIC_TITLES[cat];
@@ -85,25 +77,80 @@ function getTopic(cat, idx) {
   return list[Math.abs(idx) % list.length];
 }
 
+// ── フェーズ境界の動的計算 ────────────────────────────────────────
+//
+// 総日数（開始日〜試験前日）に応じてフェーズ長を比例配分する。
+// Phase 5（最終復習）は常に末尾17日固定。
+// Phase 4（模試演習）は残りの18%、7〜30日の範囲に収める。
+// Phase 1・2・3 は残り日数を 30 / 35 / 35 % で分割。
+//
+// 返り値: { p1, p2, p3, p4 } — 各フェーズの最終日（'YYYY-MM-DD'）
+//   p4 + 1 日〜試験前日が Phase 5 になる。
+//
+export function calcPhaseBoundaries(startDateStr) {
+  const start   = parseLocalDate(startDateStr);
+  const lastDay = parseLocalDate(EXAM_DATE);
+  lastDay.setDate(lastDay.getDate() - 1); // 10/17（試験前日）
+
+  const totalDays = Math.max(0, Math.floor((lastDay - start) / 86400000) + 1);
+
+  // Phase 5: 最後17日（足りなければ全期間）
+  const p5 = Math.min(17, totalDays);
+  // Phase 4: 残りの18%、最低7日・最大30日（残りがなければ0）
+  const afterP5 = totalDays - p5;
+  const p4 = afterP5 > 0
+    ? Math.min(30, Math.max(7, Math.round(afterP5 * 0.18)))
+    : 0;
+  // Phase 1〜3: 残り日数を 30/35/35 で分割
+  const early = Math.max(0, totalDays - p5 - p4);
+  const p1 = Math.round(early * 0.30);
+  const p2 = Math.round(early * 0.35);
+  const p3 = early - p1 - p2;
+
+  // n 日目の最終日文字列（0 なら開始日の前日 ＝ フェーズなし）
+  function endDateStr(n) {
+    const d = new Date(start);
+    d.setDate(d.getDate() + n - 1);
+    return formatDate(d);
+  }
+
+  return {
+    p1: endDateStr(p1),
+    p2: endDateStr(p1 + p2),
+    p3: endDateStr(p1 + p2 + p3),
+    p4: endDateStr(p1 + p2 + p3 + p4),
+    // Phase 5: p4 + 1 日目〜最終日
+    days: { p1, p2, p3, p4, p5 },  // 日数情報（メタ表示用）
+  };
+}
+
+// フェーズIDの判定（境界は動的）
+function getPhaseId(dateStr, boundaries) {
+  if (dateStr <= boundaries.p1) return 1;
+  if (dateStr <= boundaries.p2) return 2;
+  if (dateStr <= boundaries.p3) return 3;
+  if (dateStr <= boundaries.p4) return 4;
+  return 5;
+}
+
 // ── 1日分のタスク生成 ──────────────────────────────────────────────
 
 function generateDayTasks(dateStr, dayIndex, phaseId, weekend) {
   const main = weekend ? 45 : 30; // 主学習・問題演習の分数
 
-  // タスクオブジェクトを作るヘルパー
   const mk = (n, cat, type, title, min) => ({
     id:        `sched-${dateStr}-${n}`,
     date:      dateStr,
     cat:       cat || null,
     type,
     title,
-    topic:     '',       // サブ行には cat ラベルのみ表示（タイトルに詳細記載）
+    topic:     '',
     min,
     carry:     false,
     scheduled: true,
   });
 
-  // ── 本試験当日（持ち越し対象外）────────────────────────────────
+  // 本試験当日
   if (dateStr === EXAM_DATE) {
     return [{
       id: `sched-${dateStr}-0`, date: dateStr, cat: null,
@@ -112,18 +159,18 @@ function generateDayTasks(dateStr, dayIndex, phaseId, weekend) {
     }];
   }
 
-  // ── Phase 5（10/1〜10/17）：最終復習 ────────────────────────────
+  // Phase 5：最終復習
   if (phaseId === 5) {
     const gyoTopic = getTopic('gyo', dayIndex);
     return [
-      mk(0, null,    'review', '復習：間違いノート',                         main),
-      mk(1, 'gyo',   'review', `暗記確認：宅建業法 / ${gyoTopic}`,           main),
-      mk(2, 'horei', 'review', '暗記確認：法令上の制限',                     20),
-      mk(3, null,    'tidy',   '最終チェック',                              10),
+      mk(0, null,    'review', '復習：間違いノート',                    main),
+      mk(1, 'gyo',   'review', `暗記確認：宅建業法 / ${gyoTopic}`,      main),
+      mk(2, 'horei', 'review', '暗記確認：法令上の制限',                20),
+      mk(3, null,    'tidy',   '最終チェック',                         10),
     ];
   }
 
-  // ── Phase 4（9月）：年度別・模試演習 ───────────────────────────
+  // Phase 4：年度別・模試演習
   if (phaseId === 4) {
     const mainTitle = weekend ? '模試演習' : '年度別過去問';
     return [
@@ -134,8 +181,8 @@ function generateDayTasks(dateStr, dayIndex, phaseId, weekend) {
     ];
   }
 
-  // ── Phase 1〜3（6〜8月）：科目ローテーション ────────────────────
-  const cycle      = PHASE_CAT_CYCLE[phaseId];
+  // Phase 1〜3：科目ローテーション
+  const cycle      = PHASE_CAT_CYCLE[phaseId] || PHASE_CAT_CYCLE[1];
   const primaryCat = cycle[dayIndex % cycle.length];
   const secCat     = SEC_CAT[primaryCat];
   const pLabel     = CAT_LABELS[primaryCat];
@@ -145,7 +192,6 @@ function generateDayTasks(dateStr, dayIndex, phaseId, weekend) {
   const sTopic     = getTopic(secCat, Math.floor(dayIndex / 3));
 
   if (phaseId === 3) {
-    // Phase 3：論点別過去問強化
     return [
       mk(0, primaryCat, 'drill',  `問題演習：${pLabel} 論点別過去問 / ${pTopic}`,  main),
       mk(1, null,       'review', '復習：苦手論点',                                20),
@@ -155,7 +201,6 @@ function generateDayTasks(dateStr, dayIndex, phaseId, weekend) {
   }
 
   if (phaseId === 2) {
-    // Phase 2：基礎演習（問題演習メイン → 次トピックの新規学習）
     const nTopic = getTopic(primaryCat, dayIndex + 1);
     return [
       mk(0, primaryCat, 'drill',  `問題演習：${pLabel} / ${pTopic}`,  main),
@@ -165,7 +210,7 @@ function generateDayTasks(dateStr, dayIndex, phaseId, weekend) {
     ];
   }
 
-  // Phase 1：基礎導入（新規学習 → 即演習）
+  // Phase 1：基礎導入
   return [
     mk(0, primaryCat, 'new',    `新規学習：${pLabel} / ${pTopic}`,   main),
     mk(1, primaryCat, 'drill',  `問題演習：${pLabel} / ${pTopic}`,   main),
@@ -176,8 +221,9 @@ function generateDayTasks(dateStr, dayIndex, phaseId, weekend) {
 
 // ── スケジュール全体生成 ───────────────────────────────────────────
 
-export function generateSchedule(startDate) {
+export function generateSchedule(startDate, boundaries) {
   const effectiveStart = startDate || loadStudyStart();
+  const bs  = boundaries || calcPhaseBoundaries(effectiveStart);
   const start = parseLocalDate(effectiveStart);
   const end   = parseLocalDate(EXAM_DATE);
   const all   = [];
@@ -187,7 +233,7 @@ export function generateSchedule(startDate) {
 
   while (cur <= end) {
     const dateStr = formatDate(cur);
-    const phaseId = getPhaseId(dateStr);
+    const phaseId = getPhaseId(dateStr, bs);
     const tasks   = generateDayTasks(dateStr, dayIndex, phaseId, isWeekend(cur));
     all.push(...tasks);
     dayIndex++;
@@ -222,10 +268,11 @@ function saveScheduleMeta(meta) {
 
 export function generateAndSave(startDate) {
   const effectiveStart = startDate || loadStudyStart();
-  if (startDate) saveStudyStart(startDate); // 指定された場合は保存
+  if (startDate) saveStudyStart(startDate);
 
-  const existing    = loadScheduledTasks();
-  const generated   = generateSchedule(effectiveStart);
+  const boundaries = calcPhaseBoundaries(effectiveStart);
+  const existing   = loadScheduledTasks();
+  const generated  = generateSchedule(effectiveStart, boundaries);
 
   // date::title をキーに重複チェック（手動タスク・完了タスクを保護）
   const existingKeys = new Set(existing.map(t => `${t.date}::${t.title}`));
@@ -240,6 +287,13 @@ export function generateAndSave(startDate) {
     newCount:    newTasks.length,
     startDate:   effectiveStart,
     endDate:     EXAM_DATE,
+    phaseDays:   boundaries.days,   // 各フェーズの日数（UI表示用）
+    phaseBounds: {                  // 各フェーズの最終日（UI表示用）
+      p1: boundaries.p1,
+      p2: boundaries.p2,
+      p3: boundaries.p3,
+      p4: boundaries.p4,
+    },
   };
   saveScheduleMeta(meta);
   return meta;
@@ -255,21 +309,12 @@ export function getScheduledTasksForDate(tasks, dateStr) {
 
 export const LS_CARRYOVER_DATE_KEY = 'takken-last-carryover-processed-date';
 
-/**
- * doneMap: { [taskId]: boolean }  ← takken-task-done の中身
- * todayStr: 'YYYY-MM-DD'
- * 前日以前の未完了スケジュールタスクを今日の日付に移動する。
- * 同日に同名タスクがある場合は旧インスタンスを削除（重複排除）。
- * fixedDate: true のタスクは対象外。
- * 同じ日に何度呼んでも冪等（lastCarryoverProcessedDate で制御）。
- */
 export function processCarryover(doneMap, todayStr) {
   const lastDate = localStorage.getItem(LS_CARRYOVER_DATE_KEY) || '';
-  if (lastDate >= todayStr) return false; // already processed today
+  if (lastDate >= todayStr) return false;
 
   const tasks = loadScheduledTasks();
 
-  // 今日すでに存在するタスクのタイトルセット（重複防止）
   const todayTitles = new Set(
     tasks.filter(t => t.date === todayStr).map(t => t.title)
   );
@@ -277,10 +322,8 @@ export function processCarryover(doneMap, todayStr) {
   let changed = false;
 
   const updatedTasks = tasks.map(t => {
-    // 対象外: 本日以降 / 完了済み / fixedDate
     if (t.date >= todayStr || !!doneMap[t.id] || t.fixedDate) return t;
 
-    // 今日に同名タスクがある → 旧インスタンス削除（同一内容なので統合）
     if (todayTitles.has(t.title)) {
       changed = true;
       return null;
@@ -290,7 +333,7 @@ export function processCarryover(doneMap, todayStr) {
     const count         = (t.carriedOverCount || 0) + 1;
     const PRIORITY_UP   = { low: 'medium', medium: 'high', high: 'high' };
 
-    todayTitles.add(t.title); // 同一ランの重複防止
+    todayTitles.add(t.title);
     changed = true;
 
     return {

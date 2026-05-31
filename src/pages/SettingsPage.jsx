@@ -2,7 +2,7 @@ import { useRef, useState, useMemo } from 'react';
 import Icon from '../components/Icon';
 import {
   generateAndSave, loadScheduleMeta, loadStudyStart,
-  EXAM_DATE,
+  calcPhaseBoundaries, EXAM_DATE,
 } from '../data/scheduleData';
 import CloudSyncPanel from '../components/CloudSyncPanel';
 import { useCloudSync } from '../lib/CloudSyncContext';
@@ -348,9 +348,50 @@ function ScheduleSection({ onGoHome }) {
           </span>
         </div>
         <div style={{ fontSize: 11.5, color: 'var(--ink-4)', marginTop: 5 }}>
-          今日以降の日付を選択してください。選んだ日から試験日までのタスクが生成されます。
+          今日以降の日付を選択してください。試験日までの期間に合わせてフェーズが自動調整されます。
         </div>
       </div>
+
+      {/* フェーズ配分プレビュー */}
+      {startDate && startDate >= today && startDate <= maxDate && (() => {
+        const b = calcPhaseBoundaries(startDate);
+        const d = b.days;
+        const totalStudy = d.p1 + d.p2 + d.p3 + d.p4 + d.p5;
+        const phases = [
+          { label: 'Phase 1 基礎導入', days: d.p1, color: '#10b981' },
+          { label: 'Phase 2 基礎演習', days: d.p2, color: '#0ea5e9' },
+          { label: 'Phase 3 論点強化', days: d.p3, color: '#f59e0b' },
+          { label: 'Phase 4 模試演習', days: d.p4, color: '#ef4444' },
+          { label: 'Phase 5 最終復習', days: d.p5, color: '#8b5cf6' },
+        ].filter(p => p.days > 0);
+        return (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-3)' }}>
+              フェーズ配分（全{totalStudy}日）
+            </div>
+            {/* バー */}
+            <div style={{ display: 'flex', borderRadius: 6, overflow: 'hidden', height: 10 }}>
+              {phases.map(p => (
+                <div key={p.label} style={{
+                  width: `${(p.days / totalStudy) * 100}%`,
+                  background: p.color, minWidth: 2,
+                }} />
+              ))}
+            </div>
+            {/* 凡例 */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 12px' }}>
+              {phases.map(p => (
+                <div key={p.label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                  <span style={{ width: 8, height: 8, borderRadius: 2, background: p.color, flexShrink: 0 }} />
+                  <span style={{ fontSize: 11.5, color: 'var(--ink-3)' }}>
+                    {p.label} <strong style={{ color: 'var(--ink-2)' }}>{p.days}日</strong>
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
 
       {/* 生成済みメタ情報 */}
       {meta && (
@@ -360,6 +401,22 @@ function ScheduleSection({ onGoHome }) {
           <InfoRow label="生成済み期間"   value={fmtPeriod(meta.startDate, meta.endDate)} />
           <InfoRow label="最終生成日時"   value={fmtDateTime(meta.generatedAt)} />
           <InfoRow label="生成済みタスク" value={`${meta.taskCount} 件`} />
+          {meta.phaseDays && (
+            <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: '3px 12px' }}>
+              {[
+                { l: 'P1基礎', v: meta.phaseDays.p1, c: '#10b981' },
+                { l: 'P2演習', v: meta.phaseDays.p2, c: '#0ea5e9' },
+                { l: 'P3強化', v: meta.phaseDays.p3, c: '#f59e0b' },
+                { l: 'P4模試', v: meta.phaseDays.p4, c: '#ef4444' },
+                { l: 'P5復習', v: meta.phaseDays.p5, c: '#8b5cf6' },
+              ].filter(x => x.v > 0).map(x => (
+                <span key={x.l} style={{ fontSize: 11.5, color: 'var(--ink-3)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <span style={{ width: 7, height: 7, borderRadius: 2, background: x.c, flexShrink: 0 }} />
+                  {x.l} {x.v}日
+                </span>
+              ))}
+            </div>
+          )}
           {meta.newCount === 0 && (
             <div style={{ fontSize: 11.5, color: 'var(--ink-3)', marginTop: 6 }}>
               ※ 最後の生成で新規追加はありませんでした

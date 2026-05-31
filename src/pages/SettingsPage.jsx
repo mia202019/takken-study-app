@@ -245,7 +245,6 @@ function ImportSection() {
 
 function ScheduleSection({ onGoHome }) {
   const [meta,      setMeta]      = useState(loadScheduleMeta);
-  const [startDate, setStartDate] = useState(loadStudyStart);
   const [state,     setState]     = useState('idle'); // idle | done | error
   const [errorMsg,  setErrorMsg]  = useState('');
   const [showDoneModal, setShowDoneModal] = useState(false);
@@ -255,8 +254,19 @@ function ScheduleSection({ onGoHome }) {
   const today   = fmtDate(new Date());
   const maxDate = '2026-10-17';
 
+  // 保存済み開始日が過去なら today に補正
+  const [startDate, setStartDate] = useState(() => {
+    const saved = loadStudyStart();
+    return saved < today ? today : saved;
+  });
+
   const handleGenerate = () => {
-    if (!startDate || startDate > maxDate) {
+    if (!startDate || startDate < today) {
+      setErrorMsg('開始日は今日以降の日付を選択してください');
+      setState('error');
+      return;
+    }
+    if (startDate > maxDate) {
       setErrorMsg('開始日は2026年10月17日以前に設定してください');
       setState('error');
       return;

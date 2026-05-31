@@ -118,42 +118,33 @@ function MaterialChip({ item }) {
 
   const chipStyle = {
     display: 'inline-flex', alignItems: 'center', gap: 4,
-    padding: '3px 8px', borderRadius: 6,
-    fontSize: 11, fontWeight: 500, lineHeight: 1.3,
+    padding: '4px 9px', borderRadius: 6,
+    fontSize: 11.5, fontWeight: 500, lineHeight: 1.3,
     background: isVideo ? '#fff3e0' : 'var(--chip-neutral-bg)',
     color:      isVideo ? '#c05000' : 'var(--ink-3)',
     border:     isVideo ? '1px solid #f5c08a' : '1px solid var(--line)',
     textDecoration: 'none',
     cursor: isLink ? 'pointer' : 'default',
-    flexShrink: 0,
     userSelect: 'none',
-    maxWidth: 200,
   };
 
-  // 動画：アイコン ＋ 章タイトル（論点名）
-  // 教科書/問題集：アイコン ＋ 略称 ＋ 区切り ＋ 章タイトル短縮
   const chap = unit.chapterTitle || '';
-  const chapShort = chap.length > 14 ? chap.slice(0, 13) + '…' : chap;
 
+  // 動画：▶ アイコン ＋ 章タイトル（論点名）
+  // 教科書/問題集：📖 アイコン ＋ 略称（太字） ＋ · ＋ 章タイトル（フル表示）
   const inner = isVideo ? (
     <>
-      <Icon name={iconName} size={11} stroke={1.8} style={{ flexShrink: 0 }} />
-      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-        {chapShort || matShortName(material)}
-      </span>
+      <Icon name={iconName} size={12} stroke={1.8} style={{ flexShrink: 0 }} />
+      <span>{chap || matShortName(material)}</span>
     </>
   ) : (
     <>
-      <Icon name={iconName} size={11} stroke={1.8} style={{ flexShrink: 0 }} />
-      <span style={{ fontWeight: 600, flexShrink: 0, whiteSpace: 'nowrap' }}>
-        {matShortName(material)}
-      </span>
-      {chapShort && (
+      <Icon name={iconName} size={12} stroke={1.8} style={{ flexShrink: 0 }} />
+      <span style={{ fontWeight: 700, flexShrink: 0 }}>{matShortName(material)}</span>
+      {chap && (
         <>
-          <span style={{ color: 'var(--line-strong)', flexShrink: 0 }}>·</span>
-          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {chapShort}
-          </span>
+          <span style={{ color: 'var(--line-strong)', flexShrink: 0, margin: '0 1px' }}>·</span>
+          <span>{chap}</span>
         </>
       )}
     </>
@@ -481,7 +472,7 @@ function TaskRow({ task, onToggle, matLinks = [] }) {
         {/* 参考教材チップ — 教材選択済みのときのみ表示 */}
         {matLinks.length > 0 && (
           <div
-            style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginTop: 6 }}
+            style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 7 }}
             onClick={e => e.stopPropagation()}
           >
             {matLinks.map((x, i) => <MaterialChip key={i} item={x} />)}

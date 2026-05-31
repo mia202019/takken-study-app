@@ -1,16 +1,35 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import Icon from '../components/Icon';
 import { CAT, EXAM, INITIAL_TASKS } from '../data/appData';
-import { TOPICS, ALL_TOPICS, loadLevels } from '../data/topicsData';
+import { TOPICS, ALL_TOPICS, loadLevels, LS_LEVELS_KEY } from '../data/topicsData';
 import { loadReviewItems, computeReviewStats, hasPendingReview, todayStr } from '../data/reviewData';
 import { loadMistakeLogs } from '../data/mistakeData';
-import { loadMaterialUnits } from '../data/materialData';
+import { loadMaterialUnits, LS_UNITS_KEY } from '../data/materialData';
+import { loadScheduledTasks, LS_SCHEDULED_KEY } from '../data/scheduleData';
 
 const TODAY = todayStr();
 
+// takken-task-done のキー
+const LS_TASK_DONE_KEY = 'takken-task-done';
+
 function loadTaskDone() {
-  try { return JSON.parse(localStorage.getItem('takken-task-done')) || {}; }
+  try { return JSON.parse(localStorage.getItem(LS_TASK_DONE_KEY)) || {}; }
   catch { return {}; }
+}
+
+// 今週（月曜始まり）の完了タスク学習時間を実データから計算
+function computeWeeklyDoneH() {
+  const tasks = loadScheduledTasks();
+  const now   = new Date();
+  const day   = now.getDay();
+  const diffToMon = (day === 0 ? -6 : 1 - day);
+  const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() + diffToMon);
+  const ws = `${weekStart.getFullYear()}-${String(weekStart.getMonth()+1).padStart(2,'0')}-${String(weekStart.getDate()).padStart(2,'0')}`;
+  const ts = TODAY;
+  const minutes = tasks
+    .filter(t => t.done && t.date >= ws && t.date <= ts)
+    .reduce((s, t) => s + (t.min || 0), 0);
+  return Math.round(minutes / 6) / 10;
 }
 
 // ── UI primitives ──────────────────────────────────────────────────
@@ -106,7 +125,7 @@ function OverallSummary({ data }) {
     <div className="tk-card">
       <CardTitle>全体サマリー</CardTitle>
       <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-        <StatBox label="今週の学習" value={EXAM.weeklyDoneH} unit="h" accent />
+        <StatBox label="今週の学習" value={data.weeklyDoneH} unit="h" accent />
         <StatBox label="完了タスク" value={`${data.tasksDone}/${INITIAL_TASKS.length}`} />
         <StatBox label="復習バックログ" value={data.overdueReview} unit="件" warn={data.overdueReview > 0} />
       </div>
@@ -349,11 +368,26 @@ function MaterialProgress({ byStatus }) {
 // ── Page ──────────────────────────────────────────────────────────
 
 export default function AnalysisPage() {
-  const levels        = useMemo(loadLevels,        []);
-  const reviewItems   = useMemo(loadReviewItems,   []);
-  const mistakeLogs   = useMemo(loadMistakeLogs,   []);
-  const materialUnits = useMemo(loadMaterialUnits, []);
-  const taskDone      = useMemo(loadTaskDone,      []);
+  const [levels,        setLevels]        = useState(loadLevels);
+  const [reviewItems,   setReviewItems]   = useState(loadReviewItems);
+  const [mistakeLogs,   setMistakeLogs]   = useState(loadMistakeLogs);
+  const [materialUnits, setMaterialUnits] = useState(loadMaterialUnits);
+  const [taskDone,      setTaskDone]      = useState(loadTaskDone);
+  const [weeklyDoneH,   setWeeklyDoneH]   = useState(computeWeeklyDoneH);
+
+  // リセット・更新時に再取得
+  useEffect(() => {
+    const handler = () => {
+      setLevels(loadLevels());
+      setReviewItems(loadReviewItems());
+      setMistakeLogs(loadMistakeLogs());
+      setMaterialUnits(loadMaterialUnits());
+      setTaskDone(loadTaskDone());
+      setWeeklyDoneH(computeWeeklyDoneH());
+    };
+    window.addEventListener('storage', handler);
+    return () => window.removeEventListener('storage', handler);
+  }, []);
 
   // Review stats (uses arrays from reviewData's own computation)
   const reviewStats = useMemo(() => computeReviewStats(reviewItems), [reviewItems]);
@@ -423,6 +457,7 @@ export default function AnalysisPage() {
 
   const summaryData = {
     tasksDone,
+    weeklyDoneH,
     overdueReview:    overdueCount,
     mistakeTotal:     mistakeLogs.length,
     matCompleted:     matByStatus.completed || 0,

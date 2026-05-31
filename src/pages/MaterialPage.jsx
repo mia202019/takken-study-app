@@ -11,6 +11,7 @@ import {
   computeMaterialStats, addMaterialFromCatalog,
 } from '../data/materialData';
 import { TEXTBOOK_CATALOG, catalogUnitSummary } from '../data/textbookCatalog';
+import { LS_SCHEDULE_META_KEY } from '../data/scheduleData';
 
 // ── Style helpers ─────────────────────────────────────────────────────
 
@@ -790,9 +791,14 @@ function SummaryStrip({ stats }) {
 
 // ── Main ──────────────────────────────────────────────────────────────
 
-export default function MaterialPage() {
+function loadHasSchedule() {
+  try { return !!localStorage.getItem(LS_SCHEDULE_META_KEY); } catch { return false; }
+}
+
+export default function MaterialPage({ onGoSettings }) {
   const [materials, setMaterials] = useState(loadMaterials);
   const [units, setUnits] = useState(loadMaterialUnits);
+  const [hasSchedule, setHasSchedule] = useState(loadHasSchedule);
   const [toast, setToast] = useState(null);
 
   // Sheet state
@@ -810,8 +816,9 @@ export default function MaterialPage() {
 
   useEffect(() => {
     const handler = (e) => {
-      if (!e.key || e.key === LS_MATERIALS_KEY) setMaterials(loadMaterials());
-      if (!e.key || e.key === LS_UNITS_KEY) setUnits(loadMaterialUnits());
+      if (!e.key || e.key === LS_MATERIALS_KEY)    setMaterials(loadMaterials());
+      if (!e.key || e.key === LS_UNITS_KEY)        setUnits(loadMaterialUnits());
+      if (!e.key || e.key === LS_SCHEDULE_META_KEY) setHasSchedule(loadHasSchedule());
     };
     window.addEventListener('storage', handler);
     return () => window.removeEventListener('storage', handler);
@@ -939,6 +946,43 @@ export default function MaterialPage() {
             </button>
           </div>
         </>
+      )}
+
+      {/* STEP② 案内バナー — 教材あり & スケジュール未設定 */}
+      {materials.length > 0 && !hasSchedule && onGoSettings && (
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 14,
+          padding: '14px 16px', borderRadius: 14,
+          background: 'var(--accent-bg)',
+          border: '1.5px solid var(--accent)',
+        }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 5 }}>
+              <span style={{
+                background: '#f97316', color: '#fff',
+                borderRadius: 20, padding: '1px 8px',
+                fontSize: 11, fontWeight: 800,
+              }}>STEP②</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--ink-1)' }}>
+                次はスケジュールを設定しよう
+              </span>
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--ink-3)', lineHeight: 1.5 }}>
+              教材の選択が完了しました。設定画面で学習スケジュールを生成してください。
+            </div>
+          </div>
+          <button
+            onClick={onGoSettings}
+            style={{
+              flexShrink: 0, padding: '9px 14px', borderRadius: 10,
+              border: 'none', background: 'var(--accent)', color: '#fff',
+              fontSize: 12.5, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+              display: 'flex', alignItems: 'center', gap: 5,
+            }}
+          >
+            設定へ <Icon name="arrowRight" size={13} stroke={2.2} />
+          </button>
+        </div>
       )}
 
       {/* カタログプレビューシート（教材ゼロ時 or カタログから追加ボタン経由） */}

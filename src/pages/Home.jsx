@@ -1354,7 +1354,7 @@ function AuthedApp() {
     if (pageId === 'map')     return <TopicMap desktop={!isMobile} />;
     if (pageId === 'review')  return <ReviewPage />;
     if (pageId === 'mistake') return <MistakePage />;
-    if (pageId === 'material') return <MaterialPage />;
+    if (pageId === 'material') return <MaterialPage onGoSettings={() => setActive('settings')} />;
     if (pageId === 'analysis')  return <AnalysisPage />;
     if (pageId === 'library')   return <ResourcePage />;
     if (pageId === 'settings')  return <SettingsPage />;

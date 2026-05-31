@@ -2,7 +2,7 @@ import { useRef, useState, useMemo } from 'react';
 import Icon from '../components/Icon';
 import {
   generateAndSave, loadScheduleMeta, loadStudyStart,
-  calcPhaseBoundaries, EXAM_DATE,
+  calculateDynamicPhases, calcPhaseBoundaries, EXAM_DATE,
 } from '../data/scheduleData';
 import CloudSyncPanel from '../components/CloudSyncPanel';
 import { useCloudSync } from '../lib/CloudSyncContext';
@@ -354,37 +354,53 @@ function ScheduleSection({ onGoHome }) {
 
       {/* フェーズ配分プレビュー */}
       {startDate && startDate >= today && startDate <= maxDate && (() => {
-        const b = calcPhaseBoundaries(startDate);
-        const d = b.days;
+        const pd = calculateDynamicPhases(startDate, EXAM_DATE);
+        const d  = pd.days;
         const totalStudy = d.p1 + d.p2 + d.p3 + d.p4 + d.p5;
-        const phases = [
-          { label: 'Phase 1 基礎導入', days: d.p1, color: '#10b981' },
-          { label: 'Phase 2 基礎演習', days: d.p2, color: '#0ea5e9' },
-          { label: 'Phase 3 論点強化', days: d.p3, color: '#f59e0b' },
-          { label: 'Phase 4 模試演習', days: d.p4, color: '#ef4444' },
-          { label: 'Phase 5 最終復習', days: d.p5, color: '#8b5cf6' },
-        ].filter(p => p.days > 0);
+        const isSprint   = pd.mode === 'sprint';
+
+        if (isSprint) {
+          return (
+            <div style={{
+              padding: '10px 14px', borderRadius: 10,
+              background: '#fff8e1', border: '1px solid #f6d860',
+              fontSize: 13, color: '#7a5f00', lineHeight: 1.7,
+            }}>
+              ⚡ <strong>直前集中モード</strong>（全{totalStudy}日）<br />
+              学習期間が短いため、宅建業法・論点別過去問・間違いノート復習を中心とした短期集中モードで生成します。
+            </div>
+          );
+        }
+
+        const PHASE_META = [
+          { key: 'p1', label: 'Phase 1 基礎導入', color: '#10b981' },
+          { key: 'p2', label: 'Phase 2 基礎演習', color: '#0ea5e9' },
+          { key: 'p3', label: 'Phase 3 論点強化', color: '#f59e0b' },
+          { key: 'p4', label: 'Phase 4 模試演習', color: '#ef4444' },
+          { key: 'p5', label: 'Phase 5 最終復習', color: '#8b5cf6' },
+        ].filter(p => d[p.key] > 0);
+
+        const modeLabel = pd.mode === 'medium' ? '中期' : pd.mode === 'short' ? '短期' : '通常';
+
         return (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-3)' }}>
-              フェーズ配分（全{totalStudy}日）
+              フェーズ配分（全{totalStudy}日・{modeLabel}モード）
             </div>
-            {/* バー */}
             <div style={{ display: 'flex', borderRadius: 6, overflow: 'hidden', height: 10 }}>
-              {phases.map(p => (
-                <div key={p.label} style={{
-                  width: `${(p.days / totalStudy) * 100}%`,
+              {PHASE_META.map(p => (
+                <div key={p.key} style={{
+                  width: `${(d[p.key] / totalStudy) * 100}%`,
                   background: p.color, minWidth: 2,
                 }} />
               ))}
             </div>
-            {/* 凡例 */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 12px' }}>
-              {phases.map(p => (
-                <div key={p.label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+              {PHASE_META.map(p => (
+                <div key={p.key} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                   <span style={{ width: 8, height: 8, borderRadius: 2, background: p.color, flexShrink: 0 }} />
                   <span style={{ fontSize: 11.5, color: 'var(--ink-3)' }}>
-                    {p.label} <strong style={{ color: 'var(--ink-2)' }}>{p.days}日</strong>
+                    {p.label} <strong style={{ color: 'var(--ink-2)' }}>{d[p.key]}日</strong>
                   </span>
                 </div>
               ))}

@@ -22,7 +22,7 @@ import { buildMatLinksMap } from '../data/materialLinker';
 import { loadResources, computeResourceStats } from '../data/resourceData';
 import {
   loadScheduledTasks, getScheduledTasksForDate,
-  LS_SCHEDULED_KEY, processCarryover,
+  LS_SCHEDULED_KEY, LS_SCHEDULE_META_KEY, processCarryover,
 } from '../data/scheduleData';
 
 const TODAY = new Date();
@@ -536,7 +536,6 @@ function TodayStudy({ tasks, onToggle, onGoSettings, onGoMaterial, hasSchedule, 
         </div>
         {tasks.length > 0 && (
           <div style={{ display: 'flex', gap: 8 }}>
-            <StatChip label="目標" value={EXAM.todayGoalMin + '分'} />
             <StatChip label="完了" value={`${done}/${tasks.length}`} accent />
             <StatChip label="残り" value={remaining + '分'} />
           </div>
@@ -1438,9 +1437,17 @@ function AuthedApp() {
   }, []);
 
   // 初回ログイン時のみオンボーディングを表示
-  const [showOnboarding, setShowOnboarding] = useState(
-    () => !localStorage.getItem(LS_ONBOARDED_KEY)
-  );
+  // 既に教材＆スケジュール設定済みなら表示不要
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    if (localStorage.getItem(LS_ONBOARDED_KEY)) return false;
+    const alreadySetup = loadMaterials().length > 0 &&
+                         !!localStorage.getItem(LS_SCHEDULE_META_KEY);
+    if (alreadySetup) {
+      localStorage.setItem(LS_ONBOARDED_KEY, '1');
+      return false;
+    }
+    return true;
+  });
   const closeOnboarding = () => {
     localStorage.setItem(LS_ONBOARDED_KEY, '1');
     setShowOnboarding(false);

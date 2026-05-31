@@ -75,11 +75,30 @@ export function findUnitsForTask(task, allUnits, allMaterials) {
     if (!best[mid] || x.score > best[mid].score) best[mid] = x;
   });
 
+  // タスク種別ごとに見せる教材タイプを絞る
+  // new(新規学習)    → 教科書 + 動画
+  // drill(問題演習)  → 問題集 + ウェブ
+  // review(復習)     → 教科書 + 動画
+  // mock_exam(模試)  → 模試 + 問題集
+  // その他           → 制限なし
+  function taskTypeFilter(taskType, materialType) {
+    switch (taskType) {
+      case 'new':      return materialType === 'textbook' || materialType === 'video';
+      case 'drill':    return materialType === 'workbook' || materialType === 'website';
+      case 'review':   return materialType === 'textbook' || materialType === 'video';
+      case 'mock_exam':return materialType === 'mock_exam' || materialType === 'workbook';
+      default:         return true;
+    }
+  }
+
   // 表示順: 教科書 → 問題集 → YouTube動画 → ウェブ / 模試 → その他
   const TYPE_ORDER = { textbook: 0, workbook: 1, video: 2, website: 3, mock_exam: 4, other: 5 };
 
   return Object.values(best)
     .filter(x => {
+      // タスク種別フィルタ（種別なしは通す）
+      if (!taskTypeFilter(task.type, x.material.type)) return false;
+      // video はトピック一致があるときのみ
       if (x.material.type === 'video') return x.score > 0;
       return true;
     })

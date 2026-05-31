@@ -988,6 +988,11 @@ function QuickAddSheet({ kind, mobile, onClose, onSubmit }) {
 // ── Navigation ────────────────────────────────────────────────────
 
 function Sidebar({ active, onNav }) {
+  const { user } = useCloudSync();
+  const avatar = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
+  const name   = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email || '';
+  const initials = name ? name.slice(0, 1).toUpperCase() : '？';
+
   return (
     <aside style={{
       width: 220, flexShrink: 0, background: 'var(--surface)',
@@ -1019,8 +1024,26 @@ function Sidebar({ active, onNav }) {
         })}
       </nav>
       <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '12px 8px 0', borderTop: '1px solid var(--line)' }}>
-        <span style={{ width: 28, height: 28, borderRadius: 28, background: 'var(--chip-neutral-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, color: 'var(--ink-2)', fontWeight: 700 }}>初</span>
-        <div style={{ fontSize: 12, color: 'var(--ink-2)' }}>初学者プラン</div>
+        {avatar ? (
+          <img
+            src={avatar} alt={name}
+            style={{ width: 30, height: 30, borderRadius: '50%', flexShrink: 0, objectFit: 'cover' }}
+          />
+        ) : (
+          <span style={{
+            width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
+            background: 'var(--accent-bg)', color: 'var(--accent)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 13, fontWeight: 700,
+          }}>{initials}</span>
+        )}
+        <div style={{ minWidth: 0 }}>
+          <div style={{
+            fontSize: 12, fontWeight: 600, color: 'var(--ink-1)',
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>{name || 'ゲスト'}</div>
+          <div style={{ fontSize: 10.5, color: 'var(--ink-4)' }}>ログイン中</div>
+        </div>
       </div>
     </aside>
   );

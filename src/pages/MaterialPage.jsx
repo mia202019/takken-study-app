@@ -1038,15 +1038,30 @@ export default function MaterialPage({ onGoSettings }) {
       {/* 教材変更時の再生成注意 — 教材あり & スケジュール設定済み */}
       {materials.length > 0 && hasSchedule && (
         <div style={{
-          display: 'flex', gap: 10, alignItems: 'flex-start',
           padding: '12px 14px', borderRadius: 12,
           background: 'var(--warn-bg)', border: '1px solid var(--warn)',
+          display: 'flex', flexDirection: 'column', gap: 10,
         }}>
-          <Icon name="note" size={15} stroke={1.8} style={{ color: 'var(--warn)', flexShrink: 0, marginTop: 1 }} />
-          <div style={{ fontSize: 12.5, color: 'var(--ink-2)', lineHeight: 1.7 }}>
-            <strong>教材を選び直した場合</strong>は、設定画面でスケジュールを<strong>再度生成</strong>してください。<br />
-            タスクの参考教材リンクが最新の選択内容に更新されます。
+          <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+            <Icon name="note" size={15} stroke={1.8} style={{ color: 'var(--warn)', flexShrink: 0, marginTop: 1 }} />
+            <div style={{ fontSize: 12.5, color: 'var(--ink-2)', lineHeight: 1.7 }}>
+              <strong>教材を選び直した場合</strong>は、設定画面でスケジュールを<strong>再度生成</strong>してください。<br />
+              タスクの参考教材リンクが最新の選択内容に更新されます。
+            </div>
           </div>
+          {onGoSettings && (
+            <button
+              onClick={onGoSettings}
+              style={{
+                alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 6,
+                padding: '8px 14px', borderRadius: 9, border: 'none', cursor: 'pointer',
+                background: 'var(--warn)', color: '#fff',
+                fontSize: 13, fontWeight: 700, fontFamily: 'inherit',
+              }}
+            >
+              <Icon name="settings" size={13} stroke={2} /> スケジュールを再生成する →
+            </button>
+          )}
         </div>
       )}
 

@@ -465,18 +465,8 @@ export default function AnalysisPage() {
     topicsStartedPct: allTopicsCount ? Math.round(startedCount / allTopicsCount * 100) : 0,
   };
 
-  const actions = useMemo(() => buildActions({
-    overdue:     overdueCount,
-    todayReview: todayReviewCount,
-    remaining:   Math.max(0, INITIAL_TASKS.length - tasksDone),
-    needsReview: matByStatus.needs_review || 0,
-    topWeak:     weakTopics[0] ?? null,
-    topReason,
-  }), [overdueCount, todayReviewCount, tasksDone, matByStatus, weakTopics, topReason]);
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <PriorityActions actions={actions} />
       <OverallSummary data={summaryData} />
       <SubjectProgress subjectStats={subjectStats} />
       <WeakTopicsRanking

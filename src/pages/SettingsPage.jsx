@@ -334,7 +334,12 @@ function ScheduleSection({ onGoHome }) {
             value={startDate}
             min={today}
             max={maxDate}
-            onChange={e => setStartDate(e.target.value)}
+            onChange={e => {
+              const v = e.target.value;
+              if (!v) return;
+              // 今日より前は today に、試験前日より後は maxDate にクランプ
+              setStartDate(v < today ? today : v > maxDate ? maxDate : v);
+            }}
             style={{
               padding: '9px 12px', borderRadius: 10,
               border: '1.5px solid var(--border, #ddd)',

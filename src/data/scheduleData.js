@@ -398,14 +398,27 @@ export function generateAndSave(startDate) {
   const effectiveStart = startDate || loadStudyStart();
   if (startDate) saveStudyStart(startDate);
 
-  const phaseData  = calculateDynamicPhases(effectiveStart, EXAM_DATE);
-  const existing   = loadScheduledTasks();
+  const phaseData = calculateDynamicPhases(effectiveStart, EXAM_DATE);
+
+  // 完了状態を取得（完了済みタスクは削除しない）
+  let doneMap = {};
+  try { doneMap = JSON.parse(localStorage.getItem('takken-task-done')) || {}; } catch { /**/ }
+
+  // 新しい開始日より前の未完了スケジュールタスクを削除
+  // （手動追加タスク・完了済みタスクは保持）
+  const cleaned = loadScheduledTasks().filter(t => {
+    if (!t.scheduled) return true;              // 手動追加は保持
+    if (!!doneMap[t.id]) return true;            // 完了済みは保持
+    if (t.date >= effectiveStart) return true;   // 新開始日以降は保持
+    return false;                                // 開始日前の旧スケジュールを削除
+  });
+
   const generated  = generateSchedule(effectiveStart, phaseData);
 
   // date::title をキーに重複チェック（手動タスク・完了タスクを保護）
-  const existingKeys = new Set(existing.map(t => `${t.date}::${t.title}`));
+  const existingKeys = new Set(cleaned.map(t => `${t.date}::${t.title}`));
   const newTasks     = generated.filter(t => !existingKeys.has(`${t.date}::${t.title}`));
-  const merged       = [...existing, ...newTasks];
+  const merged       = [...cleaned, ...newTasks];
 
   saveScheduledTasks(merged);
 

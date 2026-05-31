@@ -529,22 +529,63 @@ function TodayStudy({ tasks, onToggle, onGoSettings, onGoMaterial, hasSchedule, 
     return `${Number(m)}月${Number(day)}日`;
   }
 
+  const allDone   = tasks.length > 0 && done >= tasks.length;
+  const pct       = tasks.length > 0 ? Math.round((done / tasks.length) * 100) : 0;
+  const headerBg  = allDone
+    ? 'linear-gradient(135deg, #1a9f5a 0%, #22c55e 100%)'
+    : 'linear-gradient(135deg, #2c4a8c 0%, var(--accent) 100%)';
+
   return (
-    <div id="today-study" className="tk-card" style={{ borderTop: '3px solid var(--accent)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-        <div>
-          <h3 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: 'var(--ink-1)' }}>今日の学習</h3>
-          <div style={{ fontSize: 12, color: 'var(--ink-3)', marginTop: 2 }}>
-            {fmtMD(TODAY)}（{weekday(TODAY)}）
+    <div id="today-study" style={{
+      borderRadius: 18, overflow: 'hidden',
+      boxShadow: '0 4px 20px rgba(44,74,140,.15), 0 1px 4px rgba(44,74,140,.08)',
+      background: 'var(--surface)',
+    }}>
+      {/* ── カラーヘッダー ── */}
+      <div style={{ background: headerBg, padding: '18px 18px 14px', color: '#fff' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: tasks.length > 0 ? 14 : 0 }}>
+          <div>
+            <div style={{ fontSize: 12, opacity: 0.75, marginBottom: 3, letterSpacing: '.04em' }}>
+              {fmtMD(TODAY)}（{weekday(TODAY)}）
+            </div>
+            <h3 style={{ margin: 0, fontSize: 22, fontWeight: 800, letterSpacing: '-.01em', lineHeight: 1.1 }}>
+              今日の学習
+            </h3>
           </div>
+          {tasks.length > 0 && (
+            <div style={{ textAlign: 'right', flexShrink: 0 }}>
+              <div style={{ fontSize: 28, fontWeight: 800, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
+                {done}
+                <span style={{ fontSize: 15, opacity: 0.7, fontWeight: 600 }}>/{tasks.length}</span>
+              </div>
+              <div style={{ fontSize: 12, opacity: 0.75, marginTop: 3 }}>
+                {allDone ? '全完了 🎉' : `残り ${remaining}分`}
+              </div>
+            </div>
+          )}
         </div>
+
+        {/* プログレスバー */}
         {tasks.length > 0 && (
-          <div style={{ display: 'flex', gap: 8 }}>
-            <StatChip label="完了" value={`${done}/${tasks.length}`} accent />
-            <StatChip label="残り" value={remaining + '分'} />
+          <div>
+            <div style={{ height: 6, borderRadius: 6, background: 'rgba(255,255,255,.25)', overflow: 'hidden' }}>
+              <div style={{
+                width: `${pct}%`, height: '100%',
+                background: '#fff', borderRadius: 6,
+                transition: 'width .5s ease',
+                boxShadow: pct > 0 ? '0 0 8px rgba(255,255,255,.5)' : 'none',
+              }} />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 5, fontSize: 11, opacity: 0.7 }}>
+              <span>{pct}% 達成</span>
+              <span>完了 {done} / {tasks.length} タスク</span>
+            </div>
           </div>
         )}
       </div>
+
+      {/* ── タスク本体 ── */}
+      <div style={{ padding: '0 16px 4px' }}>
 
       {tasks.length === 0 && !hasSchedule && mats.length === 0 && (
         /* STEP① 教材未選択 */
@@ -708,6 +749,7 @@ function TodayStudy({ tasks, onToggle, onGoSettings, onGoMaterial, hasSchedule, 
           </div>
         </>
       )}
+      </div>{/* end タスク本体 padding div */}
     </div>
   );
 }

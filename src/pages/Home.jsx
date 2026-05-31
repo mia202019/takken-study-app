@@ -392,30 +392,48 @@ function ImportantTasks() {
         重要タスク・申込関連
       </SectionLabel>
       <div style={{ display: 'flex', flexDirection: 'column' }}>
-        {rows.map((t, i) => (
-          <div key={t.date} style={{
+        {rows.map((t, i) => {
+          const inner = (
+            <>
+              <div style={{ width: 50, flexShrink: 0, textAlign: 'center' }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: t.exam ? 'var(--warn)' : 'var(--ink-1)', fontVariantNumeric: 'tabular-nums', lineHeight: 1.1 }}>{fmtShort(t.d)}</div>
+                <div style={{ fontSize: 10.5, color: 'var(--ink-3)' }}>{t.d.getFullYear()}</div>
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                  <span style={{ fontSize: 14, fontWeight: 600 }}>{t.title}</span>
+                  {t.exam && <span style={{ ...tagBase('xs'), background: 'var(--warn-bg)', color: 'var(--warn)' }}>本番</span>}
+                  {t.key && <span style={{ ...tagBase('xs'), background: 'var(--accent-bg)', color: 'var(--accent)' }}>重要</span>}
+                </div>
+                <div style={{ fontSize: 11.5, color: 'var(--ink-3)', marginTop: 1 }}>{t.note}</div>
+              </div>
+              <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4 }}>
+                <span style={{ fontSize: 12, color: 'var(--ink-2)', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
+                  {t.left >= 0 ? `あと${t.left}日` : `${-t.left}日超過`}
+                </span>
+                {t.url && (
+                  <span style={{ fontSize: 10.5, color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Icon name="arrowRight" size={10} stroke={2} /> RETIO
+                  </span>
+                )}
+              </div>
+            </>
+          );
+
+          const rowStyle = {
             display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0',
             borderTop: i ? '1px solid var(--line)' : 'none',
-          }}>
-            <div style={{ width: 50, flexShrink: 0, textAlign: 'center' }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: t.exam ? 'var(--warn)' : 'var(--ink-1)', fontVariantNumeric: 'tabular-nums', lineHeight: 1.1 }}>{fmtShort(t.d)}</div>
-              <div style={{ fontSize: 10.5, color: 'var(--ink-3)' }}>{t.d.getFullYear()}</div>
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                <span style={{ fontSize: 14, fontWeight: 600 }}>{t.title}</span>
-                {t.exam && <span style={{ ...tagBase('xs'), background: 'var(--warn-bg)', color: 'var(--warn)' }}>本番</span>}
-                {t.key && <span style={{ ...tagBase('xs'), background: 'var(--accent-bg)', color: 'var(--accent)' }}>重要</span>}
-              </div>
-              <div style={{ fontSize: 11.5, color: 'var(--ink-3)', marginTop: 1 }}>{t.note}</div>
-            </div>
-            <div style={{ flexShrink: 0 }}>
-              <span style={{ fontSize: 12, color: 'var(--ink-2)', fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
-                {t.left >= 0 ? `あと${t.left}日` : `${-t.left}日超過`}
-              </span>
-            </div>
-          </div>
-        ))}
+          };
+
+          return t.url ? (
+            <a key={t.date} href={t.url} target="_blank" rel="noopener noreferrer"
+              style={{ ...rowStyle, textDecoration: 'none', color: 'inherit' }}>
+              {inner}
+            </a>
+          ) : (
+            <div key={t.date} style={rowStyle}>{inner}</div>
+          );
+        })}
       </div>
     </div>
   );

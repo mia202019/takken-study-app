@@ -34,15 +34,13 @@ export const INITIAL_TASKS = [
 ];
 
 export const FIXED_TASKS = [
-  { date: '2026-06-05', title: '公告確認',         note: '試験案内の公告をチェック' },
-  { date: '2026-06-25', title: '申込準備',         note: '証明写真・本人確認書類' },
-  { date: '2026-07-01', title: 'ネット申込',       note: '受付開始日', key: true },
-  { date: '2026-07-14', title: '申込完了確認',     note: '申込状況を確認' },
-  { date: '2026-07-31', title: '申込 最終日対応',  note: '締切（最終日）' },
-  { date: '2026-10-02', title: '受験票確認',       note: '受験票の到着を確認' },
-  { date: '2026-10-09', title: '未着問い合わせ',   note: '受験票未着の場合は問い合わせ' },
-  { date: '2026-10-17', title: '前日チェック',     note: '持ち物・会場・時間の最終確認' },
-  { date: '2026-10-18', title: '本試験',           note: '13:00〜15:00', exam: true },
+  { date: '2026-06-05', title: '公告確認',        note: '試験案内・受験要領の公告をチェック',   url: 'https://www.retio.or.jp/exam/' },
+  { date: '2026-06-25', title: '申込準備',        note: '証明写真・本人確認書類を用意',         url: 'https://www.retio.or.jp/exam/app.html' },
+  { date: '2026-07-01', title: 'ネット申込 開始', note: 'インターネット申込受付開始日',          url: 'https://www.retio.or.jp/exam/app.html', key: true },
+  { date: '2026-07-31', title: '申込 最終日',     note: 'インターネット申込締切（最終日）',      url: 'https://www.retio.or.jp/exam/app.html' },
+  { date: '2026-10-02', title: '受験票 到着確認', note: '郵送で届く受験票を確認する',           url: 'https://www.retio.or.jp/exam/' },
+  { date: '2026-10-17', title: '前日チェック',    note: '会場・持ち物・時間の最終確認',         url: 'https://www.retio.or.jp/exam/' },
+  { date: '2026-10-18', title: '本試験',          note: '13:00〜15:00',                        exam: true },
 ];
 
 export const WEAK = [

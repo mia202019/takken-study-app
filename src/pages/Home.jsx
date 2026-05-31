@@ -239,21 +239,54 @@ function useTasks() {
 
 // ── Coach bubble ──────────────────────────────────────────────────
 
-function CoachBubble({ tasks, desktop }) {
-  const done = tasks.filter(t => t.done).length;
-  const total = tasks.length;
+function CoachBubble({ tasks, hasSchedule, hasMaterials, desktop }) {
+  const done      = tasks.filter(t => t.done).length;
+  const total     = tasks.length;
   const remaining = tasks.filter(t => !t.done).reduce((a, t) => a + t.min, 0);
+
+  // 時間帯で挨拶を変える
+  const h = new Date().getHours();
+  const greet = h >= 5 && h < 11 ? 'おはようございます'
+              : h >= 11 && h < 18 ? 'こんにちは'
+              : 'こんばんは';
+  const isEvening = h >= 18 || h < 5;
+
   let msg, sub;
-  if (done >= total) {
-    msg = '今日のタスク、ぜんぶ完了です。';
-    sub = 'よくがんばりました。ゆっくり休みましょう。';
+
+  if (total === 0 && !hasSchedule && !hasMaterials) {
+    // ── 初回：教材もスケジュールも未設定
+    msg = `${greet}！`;
+    sub = 'これから宅建の学習を始めるんですね。まずは教材を選んで、合格に向けて一歩踏み出しましょう！';
+  } else if (total === 0 && !hasSchedule && hasMaterials) {
+    // ── 教材あり・スケジュール未設定
+    msg = `${greet}！`;
+    sub = '教材の準備ができましたね。次はスケジュールを設定して、学習をスタートさせましょう！';
+  } else if (total === 0 && hasSchedule) {
+    // ── スケジュール設定済み・今日のタスクなし（開始前 or 休日）
+    msg = `${greet}！`;
+    sub = 'スケジュールの準備はできています。開始日になったら今日のタスクが表示されますよ。';
+  } else if (done >= total && total > 0) {
+    // ── 全タスク完了
+    msg = '今日の分、全部完了です！';
+    sub = isEvening
+      ? 'お疲れ様でした。ゆっくり休んでください。また明日も一緒に頑張りましょう！'
+      : 'すばらしい！この積み重ねが、きっと合格への力になります。';
   } else if (done === 0) {
-    msg = '今日の分だけ、進めましょう。';
-    sub = `残り${total}件・約${remaining}分。まずは1つだけでOKです。`;
+    // ── タスクあり・まだ未着手
+    if (h >= 5 && h < 11) {
+      msg = `${greet}！今日も一緒に進めましょう。`;
+    } else if (h >= 11 && h < 18) {
+      msg = `${greet}！今日のタスク、少しずつ進めましょう。`;
+    } else {
+      msg = `${greet}！今夜も無理せず進めましょう。`;
+    }
+    sub = `今日は ${total} 件・約 ${remaining} 分。まずは1つだけでOKです！`;
   } else {
-    msg = 'いいペースです。';
-    sub = `残り${total - done}件・約${remaining}分。この調子で。`;
+    // ── 進行中
+    msg = 'いい調子ですね！';
+    sub = `残り ${total - done} 件・約 ${remaining} 分。この調子でいきましょう。`;
   }
+
   return (
     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 11 }}>
       <span style={{
@@ -1265,6 +1298,14 @@ function AuthedApp() {
   const [more, setMore] = useState(false);
   const [toast, setToast] = useState(null);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  const [hasMaterials, setHasMaterials] = useState(() => loadMaterials().length > 0);
+  useEffect(() => {
+    const handler = (e) => {
+      if (!e.key || e.key === LS_MATERIALS_KEY) setHasMaterials(loadMaterials().length > 0);
+    };
+    window.addEventListener('storage', handler);
+    return () => window.removeEventListener('storage', handler);
+  }, []);
 
   // active が変わったらURLハッシュを更新
   useEffect(() => {
@@ -1385,7 +1426,7 @@ function AuthedApp() {
             {fmtMD(TODAY)}（{weekday(TODAY)}）
           </div>
           {active === 'home'
-            ? <CoachBubble tasks={tasks} desktop={false} />
+            ? <CoachBubble tasks={tasks} hasSchedule={hasSchedule} hasMaterials={hasMaterials} desktop={false} />
             : <div style={{ fontSize: 19, fontWeight: 700 }}>{NAV.find(n => n.id === active)?.label}</div>
           }
         </header>
@@ -1417,7 +1458,7 @@ function AuthedApp() {
               {fmtMD(TODAY)}（{weekday(TODAY)}）
             </div>
             {active === 'home'
-              ? <CoachBubble tasks={tasks} desktop />
+              ? <CoachBubble tasks={tasks} hasSchedule={hasSchedule} hasMaterials={hasMaterials} desktop />
               : <div>
                   <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, letterSpacing: '-.01em' }}>{NAV.find(n => n.id === active)?.label}</h1>
                 </div>

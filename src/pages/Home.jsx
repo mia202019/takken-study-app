@@ -96,57 +96,73 @@ function TypeBadge({ type }) {
 const MAT_TYPE_ICON = {
   textbook:  'book',
   workbook:  'target',
-  video:     'bolt',
+  video:     'play',
   website:   'arrowRight',
   mock_exam: 'note',
   other:     'spark',
 };
 
+// 教材タイトルの略称（shortTitle があればそれ、なければ先頭10文字）
+function matShortName(material) {
+  if (material.shortTitle) return material.shortTitle;
+  const t = material.title || '';
+  return t.length > 10 ? t.slice(0, 9) + '…' : t;
+}
+
 function MaterialChip({ item }) {
   const { unit, material } = item;
-  const isVideo   = material.type === 'video';
-  const isLink    = !!(unit.url || material.url);
-  const href      = unit.url || material.url || '#';
-  const iconName  = MAT_TYPE_ICON[material.type] || 'spark';
-
-  // 表示テキスト: chapterTitle（長すぎる場合は短縮）
-  const label = unit.chapterTitle
-    ? unit.chapterTitle.length > 16
-      ? unit.chapterTitle.slice(0, 15) + '…'
-      : unit.chapterTitle
-    : material.title;
+  const isVideo  = material.type === 'video';
+  const isLink   = !!(unit.url || material.url);
+  const href     = unit.url || material.url || '#';
+  const iconName = MAT_TYPE_ICON[material.type] || 'spark';
 
   const chipStyle = {
     display: 'inline-flex', alignItems: 'center', gap: 4,
     padding: '3px 8px', borderRadius: 6,
     fontSize: 11, fontWeight: 500, lineHeight: 1.3,
-    background: isVideo ? 'var(--carry-bg)'  : 'var(--chip-neutral-bg)',
-    color:      isVideo ? 'var(--carry)'     : 'var(--ink-3)',
-    border:     isVideo ? '1px solid var(--carry)' : '1px solid var(--line)',
+    background: isVideo ? '#fff3e0' : 'var(--chip-neutral-bg)',
+    color:      isVideo ? '#c05000' : 'var(--ink-3)',
+    border:     isVideo ? '1px solid #f5c08a' : '1px solid var(--line)',
     textDecoration: 'none',
     cursor: isLink ? 'pointer' : 'default',
     flexShrink: 0,
     userSelect: 'none',
+    maxWidth: 200,
   };
 
-  const inner = (
+  // 動画：アイコン ＋ 章タイトル（論点名）
+  // 教科書/問題集：アイコン ＋ 略称 ＋ 区切り ＋ 章タイトル短縮
+  const chap = unit.chapterTitle || '';
+  const chapShort = chap.length > 14 ? chap.slice(0, 13) + '…' : chap;
+
+  const inner = isVideo ? (
     <>
       <Icon name={iconName} size={11} stroke={1.8} style={{ flexShrink: 0 }} />
-      <span style={{ maxWidth: 120, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-        {label}
+      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        {chapShort || matShortName(material)}
       </span>
+    </>
+  ) : (
+    <>
+      <Icon name={iconName} size={11} stroke={1.8} style={{ flexShrink: 0 }} />
+      <span style={{ fontWeight: 600, flexShrink: 0, whiteSpace: 'nowrap' }}>
+        {matShortName(material)}
+      </span>
+      {chapShort && (
+        <>
+          <span style={{ color: 'var(--line-strong)', flexShrink: 0 }}>·</span>
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {chapShort}
+          </span>
+        </>
+      )}
     </>
   );
 
   if (isLink) {
     return (
-      <a
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={e => e.stopPropagation()}
-        style={chipStyle}
-      >
+      <a href={href} target="_blank" rel="noopener noreferrer"
+        onClick={e => e.stopPropagation()} style={chipStyle}>
         {inner}
       </a>
     );

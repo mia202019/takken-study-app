@@ -56,6 +56,7 @@ export function addMaterialFromCatalog(catalogEntry) {
   const material = {
     id: matId,
     title: catalogEntry.title,
+    shortTitle: catalogEntry.shortTitle || null,
     type: catalogEntry.type,
     status: catalogEntry.status || 'using',
     memo: null,

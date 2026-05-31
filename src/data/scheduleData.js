@@ -8,21 +8,17 @@ export const LS_SCHEDULED_KEY      = 'takken-scheduled-tasks';
 export const LS_SCHEDULE_META_KEY  = 'takken-schedule-meta';
 export const LS_STUDY_START_KEY    = 'takken-study-start-date'; // ユーザー設定の開始日
 
-export const STUDY_START_DEFAULT = '2026-06-01'; // デフォルト開始日（後方互換）
-export const STUDY_START         = STUDY_START_DEFAULT; // 既存コードの互換性維持
-export const EXAM_DATE           = '2026-10-18';
+export const EXAM_DATE = '2026-10-18';
 
 function formatDate(d) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-/** ユーザーが設定した開始日を取得（未設定なら今日 or デフォルト） */
+/** ユーザーが設定した開始日を取得（未設定なら今日） */
 export function loadStudyStart() {
   const saved = localStorage.getItem(LS_STUDY_START_KEY);
   if (saved) return saved;
-  // 未設定の場合：今日がデフォルト開始日より後なら今日、そうでなければデフォルト
-  const today = formatDate(new Date());
-  return today > STUDY_START_DEFAULT ? today : STUDY_START_DEFAULT;
+  return formatDate(new Date());
 }
 
 export function saveStudyStart(dateStr) {

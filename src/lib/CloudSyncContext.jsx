@@ -148,6 +148,15 @@ export function CloudSyncProvider({ children }) {
     return () => document.removeEventListener('visibilitychange', handleVisibility);
   }, [user, checkAndAutoLoad]);
 
+  // 60秒おきに定期チェック（アプリを開きっぱなしでも更新を検知）
+  useEffect(() => {
+    if (!user) return;
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') checkAndAutoLoad(user.id);
+    }, 60_000);
+    return () => clearInterval(interval);
+  }, [user, checkAndAutoLoad]);
+
   // ── 公開 API ─────────────────────────────────────────────────
 
   const signInWithGoogle = useCallback(async () => {

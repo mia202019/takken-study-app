@@ -148,7 +148,7 @@ function InAppBrowserWarning() {
 // ── Main Component ────────────────────────────────────────────────
 
 export default function CloudSyncPanel() {
-  const { user, configured, saveStatus, autoLoaded, signInWithGoogle, signOut } = useCloudSync();
+  const { user, configured, saveStatus, autoLoaded, signInWithGoogle, signOut, manualLoad, manualSave } = useCloudSync();
   const [loginError,  setLoginError]  = useState(null);
 
   // ── 未設定 ───────────────────────────────────────────────────
@@ -246,9 +246,31 @@ export default function CloudSyncPanel() {
         </div>
 
         <p style={{ margin: 0, fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.7 }}>
-          学習データは自動でクラウドに保存・同期されます。<br />
-          別の端末でログインすると最新データが自動で反映されます。
+          変更は自動でクラウドに保存されます。<br />
+          60秒おきに自動チェック。手動で今すぐ同期することもできます。
         </p>
+
+        {/* 手動同期ボタン */}
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            style={{ ...btn('primary'), flex: 1, fontSize: 13 }}
+            onClick={async () => {
+              const { error } = await manualLoad();
+              if (error) alert('読み込みエラー：' + error.message);
+            }}
+          >
+            ☁️ 今すぐ読み込む
+          </button>
+          <button
+            style={{ ...btn('outline'), flex: 1, fontSize: 13 }}
+            onClick={async () => {
+              const { error } = await manualSave();
+              if (error) alert('保存エラー：' + error.message);
+            }}
+          >
+            💾 今すぐ保存
+          </button>
+        </div>
 
         {autoLoaded && (
           <p style={{

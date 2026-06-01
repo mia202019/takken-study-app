@@ -233,6 +233,8 @@ function useTasks() {
     setDoneMap(prev => {
       const next = { ...prev, [id]: !prev[id] };
       localStorage.setItem(LS_KEY, JSON.stringify(next));
+      // auto-save トリガー（CloudSyncContext の storage ハンドラに通知）
+      window.dispatchEvent(new StorageEvent('storage', { key: LS_KEY }));
       return next;
     });
   }, []);

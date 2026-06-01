@@ -291,80 +291,122 @@ function CatalogCard({ entry, alreadyAdded, onAdd, onPreview }) {
   const typeInfo = MATERIAL_TYPES.find(t => t.id === entry.type);
 
   return (
-    <div style={{
-      position: 'relative',
-      background: 'var(--card-bg)', borderRadius: 14,
-      border: alreadyAdded ? '2px solid var(--ok)' : '1.5px solid var(--line)',
-      overflow: 'hidden',
-      cursor: alreadyAdded ? 'default' : 'pointer',
-      transition: 'border-color .15s',
-    }}
+    <div
       onClick={() => !alreadyAdded && onAdd(entry)}
+      style={{
+        position: 'relative', borderRadius: 14, overflow: 'hidden',
+        border: alreadyAdded ? '2.5px solid var(--ok)' : '2px solid var(--line)',
+        background: alreadyAdded ? '#f0fff4' : 'var(--surface)',
+        cursor: alreadyAdded ? 'default' : 'pointer',
+        transition: 'border-color .15s, background .15s',
+        display: 'flex',
+      }}
     >
-      {/* 選択済みバッジ（右上） */}
-      {alreadyAdded && (
-        <div style={{
-          position: 'absolute', top: 10, right: 10, zIndex: 2,
-          display: 'flex', alignItems: 'center', gap: 4,
-          background: 'var(--ok)', color: '#fff',
-          borderRadius: 20, padding: '3px 10px',
-          fontSize: 11.5, fontWeight: 700,
-        }}>
-          <Icon name="check" size={11} stroke={2.5} /> 選択済み
-        </div>
-      )}
+      {/* 左：タイプ色帯 */}
+      <div style={{
+        width: 52, flexShrink: 0,
+        background: alreadyAdded ? 'var(--ok)' : 'var(--accent)',
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        justifyContent: 'center', gap: 6, padding: '14px 0',
+      }}>
+        <Icon name={typeInfo?.icon || 'book'} size={20} stroke={1.8}
+          style={{ color: '#fff' }} />
+        {alreadyAdded && (
+          <Icon name="check" size={16} stroke={2.8} style={{ color: '#fff' }} />
+        )}
+      </div>
 
-      <div style={{ padding: '14px 16px 13px' }}>
-        {/* ヘッダー */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 11, marginBottom: 8 }}>
-          <span style={{
-            width: 38, height: 38, borderRadius: 10, flexShrink: 0,
-            background: alreadyAdded ? '#e8f5ec' : 'var(--accent-bg)',
-            color: alreadyAdded ? 'var(--ok)' : 'var(--accent)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <Icon name={typeInfo?.icon || 'book'} size={18} stroke={1.7} />
-          </span>
-          <div style={{ flex: 1, minWidth: 0, paddingRight: alreadyAdded ? 72 : 0 }}>
-            <div style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--ink-1)', lineHeight: 1.3 }}>
+      {/* 右：コンテンツ */}
+      <div style={{ flex: 1, padding: '12px 14px 11px', minWidth: 0 }}>
+        {/* タイトル行 */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, marginBottom: 4 }}>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 800, color: 'var(--ink-1)', lineHeight: 1.3 }}>
               {entry.shortTitle}
             </div>
-            <div style={{ fontSize: 11.5, color: 'var(--ink-3)', marginTop: 2 }}>
+            <div style={{ fontSize: 11.5, color: 'var(--ink-3)', marginTop: 1 }}>
               {entry.publisher}　·　全{total}ユニット
             </div>
           </div>
+          {alreadyAdded ? (
+            <span style={{
+              flexShrink: 0, background: 'var(--ok)', color: '#fff',
+              borderRadius: 20, padding: '3px 9px',
+              fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap',
+            }}>✓ 選択済み</span>
+          ) : (
+            <span style={{
+              flexShrink: 0, background: 'var(--accent-bg)', color: 'var(--accent)',
+              borderRadius: 20, padding: '3px 9px',
+              fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap',
+            }}>タップで追加</span>
+          )}
         </div>
 
         {/* 説明 */}
-        <div style={{ fontSize: 12.5, color: 'var(--ink-2)', lineHeight: 1.6, marginBottom: 10 }}>
+        <div style={{ fontSize: 12, color: 'var(--ink-3)', lineHeight: 1.55, marginBottom: 8 }}>
           {entry.description}
         </div>
 
-        {/* 科目タグ */}
-        <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', alignItems: 'center' }}>
+        {/* 科目タグ + 章一覧 */}
+        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', alignItems: 'center' }}>
           {CAT_ORDER.map(catId => summary[catId] ? (
             <span key={catId} style={{
-              padding: '2px 8px', borderRadius: 5, fontSize: 11, fontWeight: 600,
+              padding: '2px 7px', borderRadius: 5, fontSize: 10.5, fontWeight: 600,
               background: CAT[catId]?.bg, color: CAT[catId]?.fg,
             }}>
               {CAT[catId]?.label} {summary[catId]}
             </span>
           ) : null)}
-          {/* 章一覧リンク */}
-          {!alreadyAdded && (
-            <button
-              onClick={e => { e.stopPropagation(); onPreview(entry); }}
-              style={{
-                marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 3,
-                padding: '2px 8px', borderRadius: 5, border: 'none', cursor: 'pointer',
-                background: 'var(--chip-neutral-bg)', color: 'var(--ink-3)',
-                fontSize: 11, fontFamily: 'inherit',
-              }}
-            >
-              章一覧 <Icon name="chevron" size={10} stroke={2} />
-            </button>
-          )}
+          <button
+            onClick={e => { e.stopPropagation(); onPreview(entry); }}
+            style={{
+              marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 3,
+              padding: '2px 7px', borderRadius: 5, border: 'none', cursor: 'pointer',
+              background: 'var(--chip-neutral-bg)', color: 'var(--ink-3)',
+              fontSize: 10.5, fontFamily: 'inherit', whiteSpace: 'nowrap',
+            }}
+          >
+            章一覧 <Icon name="chevron" size={9} stroke={2} />
+          </button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// カタログセクション（常時表示）
+function CatalogSection({ addedIds, onAdd, onPreview }) {
+  return (
+    <div className="tk-card" style={{ padding: '16px 16px 14px' }}>
+      <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink-1)', marginBottom: 4 }}>
+        教材カタログ
+      </div>
+      <div style={{ fontSize: 12.5, color: 'var(--ink-3)', marginBottom: 12, lineHeight: 1.6 }}>
+        使う教材をタップして選択。複数選択できます。
+      </div>
+      <div style={{
+        display: 'flex', gap: 8, alignItems: 'flex-start',
+        padding: '9px 11px', borderRadius: 9,
+        background: '#fff8e1', border: '1px solid #f6d860',
+        marginBottom: 12,
+      }}>
+        <span style={{ fontSize: 14, flexShrink: 0 }}>📖</span>
+        <div style={{ fontSize: 11.5, color: '#7a5f00', lineHeight: 1.6 }}>
+          教科書・問題集は<strong>別途ご購入が必要</strong>です。目次のみ入っています。<br />
+          <span style={{ fontWeight: 600 }}>購入済み・購入予定のものを選んでください。</span>
+        </div>
+      </div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {TEXTBOOK_CATALOG.map(entry => (
+          <CatalogCard
+            key={entry.id}
+            entry={entry}
+            alreadyAdded={addedIds.has(entry.id)}
+            onAdd={onAdd}
+            onPreview={onPreview}
+          />
+        ))}
       </div>
     </div>
   );
@@ -1025,39 +1067,50 @@ export default function MaterialPage({ onGoSettings }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
-      {materials.length === 0 ? (
-        /* ── 教材ゼロ：カタログ選択ビュー ── */
-        <CatalogView
-          addedIds={addedCatalogIds}
-          onAdd={handleAddFromCatalog}
-          onPreview={setCatalogPreview}
-          onCustomAdd={() => setAddMatOpen(true)}
-        />
-      ) : (
+      {/* ── カタログ（常時表示） ── */}
+      <CatalogSection
+        addedIds={addedCatalogIds}
+        onAdd={handleAddFromCatalog}
+        onPreview={setCatalogPreview}
+      />
+
+      {/* ── ゼロから追加ボタン ── */}
+      <button
+        onClick={() => setAddMatOpen(true)}
+        style={{
+          width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          padding: '12px', borderRadius: 12, border: '1.5px dashed var(--line-strong)',
+          background: 'transparent', cursor: 'pointer', fontFamily: 'inherit',
+          fontSize: 13, fontWeight: 600, color: 'var(--ink-2)',
+        }}
+      >
+        <Icon name="plus" size={15} stroke={2.2} /> 独自の教材をゼロから追加
+      </button>
+
+      {/* ── 選択済み教材（カタログ外・手動追加）── */}
+      {materials.length > 0 && (
         <>
-          {/* サマリー */}
-          <SummaryStrip materials={materials} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 2 }}>
+            <div style={{ flex: 1, height: 1, background: 'var(--line)' }} />
+            <span style={{ fontSize: 12, color: 'var(--ink-3)', fontWeight: 600 }}>
+              選択済み教材 {materials.length}件
+            </span>
+            <div style={{ flex: 1, height: 1, background: 'var(--line)' }} />
+          </div>
 
-          {/* ── 追加ボタン（上部） ── */}
-          {AddButtons}
-
-          {/* ── 種別グループ別リスト ── */}
           {TYPE_ORDER.map(typeId => {
             const group = materials.filter(m => m.type === typeId);
             if (group.length === 0) return null;
             return (
               <div key={typeId}>
-                {/* グループヘッダー */}
                 <div style={{
                   display: 'flex', alignItems: 'center', gap: 8,
                   marginBottom: 8, paddingLeft: 2,
                 }}>
                   <span style={{
                     fontSize: 11.5, fontWeight: 700, letterSpacing: '.06em',
-                    color: 'var(--ink-3)', textTransform: 'uppercase',
-                  }}>
-                    {TYPE_LABELS[typeId] || typeId}
-                  </span>
+                    color: 'var(--ink-3)',
+                  }}>{TYPE_LABELS[typeId] || typeId}</span>
                   <span style={{
                     fontSize: 11, color: 'var(--ink-4)',
                     background: 'var(--chip-neutral-bg)',
@@ -1065,7 +1118,6 @@ export default function MaterialPage({ onGoSettings }) {
                   }}>{group.length}</span>
                   <div style={{ flex: 1, height: 1, background: 'var(--line)' }} />
                 </div>
-                {/* カード */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {group.map(m => (
                     <MaterialCard

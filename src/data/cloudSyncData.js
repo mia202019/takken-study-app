@@ -31,7 +31,7 @@ export function restoreLocalStorage(data) {
         localStorage.setItem(k, typeof v === 'string' ? v : JSON.stringify(v));
       }
     });
-    // UI 再描画を促すため storage イベントを発火
+    // UI 再描画を促すため storage イベントを発火（key: null で全コンポーネントに通知）
     window.dispatchEvent(new StorageEvent('storage', { key: null }));
   } catch (err) {
     console.error('[CloudSync] restoreLocalStorage failed:', err);

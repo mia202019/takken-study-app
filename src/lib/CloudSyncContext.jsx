@@ -3,7 +3,7 @@ import { createContext, useContext, useEffect, useRef, useState, useCallback } f
 import { supabase, isSupabaseConfigured } from './supabaseClient';
 import { saveToCloud, loadFromCloud, restoreLocalStorage, getCloudUpdatedAt } from '../data/cloudSyncData';
 
-const DEBOUNCE_MS     = 2500;
+const DEBOUNCE_MS     = 1000;  // 変更から1秒後に保存（短縮）
 const LS_PREFIX       = 'takken-';
 // 同期用メタキー（'takken-' で始まらないのでクラウド同期対象外）
 const LS_SYNC_TS_KEY  = '_takken_last_cloud_ts';
@@ -38,6 +38,7 @@ export function CloudSyncProvider({ children }) {
   const [configured,  setConfigured]  = useState(false);
   const debounceRef  = useRef(null);
   const checkingRef  = useRef(false);
+  const syncingRef   = useRef(false); // クラウド復元中は auto-save を抑制
 
   // ── 初期化：セッション取得 + AuthState 監視 ───────────────────
   useEffect(() => {
@@ -77,6 +78,8 @@ export function CloudSyncProvider({ children }) {
   useEffect(() => {
     if (!user) return;
     const handler = (e) => {
+      // クラウド復元中は auto-save をスキップ（復元直後の反映でクラウドを上書きしない）
+      if (syncingRef.current) return;
       if (e.key === null || (e.key && e.key.startsWith(LS_PREFIX))) {
         triggerAutoSave(user.id);
       }
@@ -87,6 +90,28 @@ export function CloudSyncProvider({ children }) {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, [user, triggerAutoSave]);
+
+  // ページ離脱・バックグラウンド移行時に即時保存（デバウンス中の変更を確実に保存）
+  useEffect(() => {
+    if (!user) return;
+    const forceSave = () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+        debounceRef.current = null;
+        // 同期的に保存はできないので、最後のデバウンスを即座に実行
+        saveToCloud(user.id).then(({ error }) => {
+          if (!error) localStorage.setItem(LS_SYNC_TS_KEY, new Date().toISOString());
+        });
+      }
+    };
+    // pagehide は iOS Safari でより確実（beforeunload は iOS では動かないことがある）
+    window.addEventListener('pagehide', forceSave);
+    window.addEventListener('beforeunload', forceSave);
+    return () => {
+      window.removeEventListener('pagehide', forceSave);
+      window.removeEventListener('beforeunload', forceSave);
+    };
+  }, [user]);
 
   // ── アカウント切り替え検知 → データ差し替え ─────────────────
   useEffect(() => {
@@ -102,10 +127,12 @@ export function CloudSyncProvider({ children }) {
 
       loadFromCloud(user.id).then(({ data, updatedAt, error }) => {
         if (!error && data) {
+          syncingRef.current = true;
           restoreLocalStorage(data);
           if (updatedAt) localStorage.setItem(LS_SYNC_TS_KEY, updatedAt);
           setAutoLoaded(true);
           setTimeout(() => setAutoLoaded(false), 4000);
+          setTimeout(() => { syncingRef.current = false; }, 2000);
         }
         // クラウドにデータなし = このアカウントは初回 → 空の状態で開始
       });
@@ -128,10 +155,14 @@ export function CloudSyncProvider({ children }) {
       if (updatedAt > localTs) {
         const { data, error } = await loadFromCloud(userId);
         if (!error && data) {
+          // 復元中フラグをセット → auto-save ハンドラがスキップする
+          syncingRef.current = true;
           restoreLocalStorage(data);
           localStorage.setItem(LS_SYNC_TS_KEY, updatedAt);
           setAutoLoaded(true);
           setTimeout(() => setAutoLoaded(false), 4000);
+          // 復元完了後2秒はフラグを保持（UI イベントが落ち着くまで）
+          setTimeout(() => { syncingRef.current = false; }, 2000);
         }
       }
     } finally {

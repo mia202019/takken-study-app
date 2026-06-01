@@ -285,28 +285,48 @@ function UnitForm({ materials, initial, fixedMaterialId, onSave, onCancel }) {
 
 const CAT_ORDER = ['gyo', 'kenri', 'horei', 'zei'];
 
-function CatalogCard({ entry, alreadyAdded, onPreview }) {
-  const summary = useMemo(() => catalogUnitSummary(entry), [entry]);
-  const total = entry.units.length;
+function CatalogCard({ entry, alreadyAdded, onAdd, onPreview }) {
+  const summary  = useMemo(() => catalogUnitSummary(entry), [entry]);
+  const total    = entry.units.length;
   const typeInfo = MATERIAL_TYPES.find(t => t.id === entry.type);
 
   return (
     <div style={{
+      position: 'relative',
       background: 'var(--card-bg)', borderRadius: 14,
-      border: '1.5px solid var(--line)',
+      border: alreadyAdded ? '2px solid var(--ok)' : '1.5px solid var(--line)',
       overflow: 'hidden',
-    }}>
-      <div style={{ padding: '14px 16px 12px' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+      cursor: alreadyAdded ? 'default' : 'pointer',
+      transition: 'border-color .15s',
+    }}
+      onClick={() => !alreadyAdded && onAdd(entry)}
+    >
+      {/* 選択済みバッジ（右上） */}
+      {alreadyAdded && (
+        <div style={{
+          position: 'absolute', top: 10, right: 10, zIndex: 2,
+          display: 'flex', alignItems: 'center', gap: 4,
+          background: 'var(--ok)', color: '#fff',
+          borderRadius: 20, padding: '3px 10px',
+          fontSize: 11.5, fontWeight: 700,
+        }}>
+          <Icon name="check" size={11} stroke={2.5} /> 選択済み
+        </div>
+      )}
+
+      <div style={{ padding: '14px 16px 13px' }}>
+        {/* ヘッダー */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 11, marginBottom: 8 }}>
           <span style={{
-            width: 40, height: 40, borderRadius: 11, flexShrink: 0,
-            background: 'var(--accent-bg)', color: 'var(--accent)',
+            width: 38, height: 38, borderRadius: 10, flexShrink: 0,
+            background: alreadyAdded ? '#e8f5ec' : 'var(--accent-bg)',
+            color: alreadyAdded ? 'var(--ok)' : 'var(--accent)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            <Icon name={typeInfo?.icon || 'book'} size={19} stroke={1.7} />
+            <Icon name={typeInfo?.icon || 'book'} size={18} stroke={1.7} />
           </span>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink-1)', lineHeight: 1.35 }}>
+          <div style={{ flex: 1, minWidth: 0, paddingRight: alreadyAdded ? 72 : 0 }}>
+            <div style={{ fontSize: 14.5, fontWeight: 700, color: 'var(--ink-1)', lineHeight: 1.3 }}>
               {entry.shortTitle}
             </div>
             <div style={{ fontSize: 11.5, color: 'var(--ink-3)', marginTop: 2 }}>
@@ -315,12 +335,13 @@ function CatalogCard({ entry, alreadyAdded, onPreview }) {
           </div>
         </div>
 
-        <div style={{ fontSize: 12.5, color: 'var(--ink-2)', lineHeight: 1.6, margin: '10px 0 10px' }}>
+        {/* 説明 */}
+        <div style={{ fontSize: 12.5, color: 'var(--ink-2)', lineHeight: 1.6, marginBottom: 10 }}>
           {entry.description}
         </div>
 
-        {/* 科目別ユニット数 */}
-        <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 12 }}>
+        {/* 科目タグ */}
+        <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', alignItems: 'center' }}>
           {CAT_ORDER.map(catId => summary[catId] ? (
             <span key={catId} style={{
               padding: '2px 8px', borderRadius: 5, fontSize: 11, fontWeight: 600,
@@ -329,30 +350,21 @@ function CatalogCard({ entry, alreadyAdded, onPreview }) {
               {CAT[catId]?.label} {summary[catId]}
             </span>
           ) : null)}
+          {/* 章一覧リンク */}
+          {!alreadyAdded && (
+            <button
+              onClick={e => { e.stopPropagation(); onPreview(entry); }}
+              style={{
+                marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 3,
+                padding: '2px 8px', borderRadius: 5, border: 'none', cursor: 'pointer',
+                background: 'var(--chip-neutral-bg)', color: 'var(--ink-3)',
+                fontSize: 11, fontFamily: 'inherit',
+              }}
+            >
+              章一覧 <Icon name="chevron" size={10} stroke={2} />
+            </button>
+          )}
         </div>
-
-        {alreadyAdded ? (
-          <div style={{
-            padding: '8px 14px', borderRadius: 9, background: '#f0fff4',
-            color: 'var(--ok)', fontSize: 13, fontWeight: 600, textAlign: 'center',
-          }}>
-            ✓ 追加済み
-          </div>
-        ) : (
-          <button
-            onClick={() => onPreview(entry)}
-            style={{
-              width: '100%', padding: '10px', borderRadius: 9,
-              border: '1.5px solid var(--accent)', background: 'var(--accent-bg)',
-              color: 'var(--accent)', fontSize: 13, fontWeight: 700,
-              cursor: 'pointer', fontFamily: 'inherit',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            }}
-          >
-            <Icon name={typeInfo?.icon || 'book'} size={14} stroke={2} />
-            {entry.type === 'video' ? 'トピック一覧を見て追加' : 'ユニット一覧を見て追加'}
-          </button>
-        )}
       </div>
     </div>
   );
@@ -475,11 +487,11 @@ function CatalogPreviewSheet({ entry, onAdd, onClose }) {
 }
 
 // カタログ選択ビュー（教材ゼロのとき表示）
-function CatalogView({ addedIds, onPreview, onCustomAdd }) {
+function CatalogView({ addedIds, onAdd, onPreview, onCustomAdd }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ fontSize: 13, color: 'var(--ink-2)', lineHeight: 1.7, padding: '0 2px' }}>
-        使用する教材を選択してください。選択した教材のユニット一覧が自動で作成されます。
+        カードをタップして教材を追加。選んだ教材のユニット一覧が自動で作成されます。
       </div>
       <div style={{
         display: 'flex', gap: 9, alignItems: 'flex-start',
@@ -497,6 +509,7 @@ function CatalogView({ addedIds, onPreview, onCustomAdd }) {
           key={entry.id}
           entry={entry}
           alreadyAdded={addedIds.has(entry.id)}
+          onAdd={onAdd}
           onPreview={onPreview}
         />
       ))}
@@ -1016,6 +1029,7 @@ export default function MaterialPage({ onGoSettings }) {
         /* ── 教材ゼロ：カタログ選択ビュー ── */
         <CatalogView
           addedIds={addedCatalogIds}
+          onAdd={handleAddFromCatalog}
           onPreview={setCatalogPreview}
           onCustomAdd={() => setAddMatOpen(true)}
         />
@@ -1158,6 +1172,7 @@ export default function MaterialPage({ onGoSettings }) {
                 key={entry.id}
                 entry={entry}
                 alreadyAdded={addedCatalogIds.has(entry.id)}
+                onAdd={(e) => { handleAddFromCatalog(e); setShowCatalogSheet(false); }}
                 onPreview={(e) => { setShowCatalogSheet(false); setCatalogPreview(e); }}
               />
             ))}

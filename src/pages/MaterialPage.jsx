@@ -977,6 +977,38 @@ export default function MaterialPage({ onGoSettings }) {
     flash('削除しました');
   }, [flash]);
 
+  // 種別ごとのグループ順
+  const TYPE_ORDER = ['textbook', 'workbook', 'video', 'website', 'mock_exam', 'other'];
+  const TYPE_LABELS = { textbook: '教科書', workbook: '問題集', video: '動画', website: 'ウェブ', mock_exam: '模試', other: 'その他' };
+
+  // 追加ボタン（上部に常時表示）
+  const AddButtons = (
+    <div style={{ display: 'flex', gap: 8 }}>
+      <button
+        onClick={() => setShowCatalogSheet(true)}
+        style={{
+          flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+          padding: '13px', borderRadius: 12, border: '1.5px solid var(--accent)',
+          background: 'var(--accent-bg)', cursor: 'pointer', fontFamily: 'inherit',
+          fontSize: 13.5, fontWeight: 700, color: 'var(--accent)',
+        }}
+      >
+        <Icon name="book" size={16} stroke={2} /> カタログから追加
+      </button>
+      <button
+        onClick={() => setAddMatOpen(true)}
+        style={{
+          flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+          padding: '13px', borderRadius: 12, border: '1.5px dashed var(--line-strong)',
+          background: 'transparent', cursor: 'pointer', fontFamily: 'inherit',
+          fontSize: 13.5, fontWeight: 600, color: 'var(--ink-2)',
+        }}
+      >
+        <Icon name="plus" size={16} stroke={2.2} /> ゼロから追加
+      </button>
+    </div>
+  );
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
@@ -992,46 +1024,52 @@ export default function MaterialPage({ onGoSettings }) {
           {/* サマリー */}
           <SummaryStrip materials={materials} />
 
-          {/* 教材リスト */}
-          {materials.map(m => (
-            <MaterialCard
-              key={m.id}
-              material={m}
-              units={unitsByMaterial[m.id] || []}
-              onAddUnit={handleAddUnit}
-              onEditUnit={setEditUnitTarget}
-              onDeleteUnit={handleDeleteUnit}
-              onStatusChange={handleStatusChange}
-              onEditMaterial={setEditMatTarget}
-              onDeleteMaterial={handleDeleteMaterial}
-            />
-          ))}
+          {/* ── 追加ボタン（上部） ── */}
+          {AddButtons}
 
-          {/* 追加ボタン群 */}
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button
-              onClick={() => setShowCatalogSheet(true)}
-              style={{
-                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
-                padding: '12px', borderRadius: 12, border: '1.5px solid var(--accent)',
-                background: 'var(--accent-bg)', cursor: 'pointer', fontFamily: 'inherit',
-                fontSize: 13, fontWeight: 700, color: 'var(--accent)',
-              }}
-            >
-              <Icon name="book" size={15} stroke={2} /> カタログから追加
-            </button>
-            <button
-              onClick={() => setAddMatOpen(true)}
-              style={{
-                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
-                padding: '12px', borderRadius: 12, border: '1.5px dashed var(--line-strong)',
-                background: 'transparent', cursor: 'pointer', fontFamily: 'inherit',
-                fontSize: 13, fontWeight: 600, color: 'var(--ink-2)',
-              }}
-            >
-              <Icon name="plus" size={15} stroke={2.2} /> ゼロから追加
-            </button>
-          </div>
+          {/* ── 種別グループ別リスト ── */}
+          {TYPE_ORDER.map(typeId => {
+            const group = materials.filter(m => m.type === typeId);
+            if (group.length === 0) return null;
+            return (
+              <div key={typeId}>
+                {/* グループヘッダー */}
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  marginBottom: 8, paddingLeft: 2,
+                }}>
+                  <span style={{
+                    fontSize: 11.5, fontWeight: 700, letterSpacing: '.06em',
+                    color: 'var(--ink-3)', textTransform: 'uppercase',
+                  }}>
+                    {TYPE_LABELS[typeId] || typeId}
+                  </span>
+                  <span style={{
+                    fontSize: 11, color: 'var(--ink-4)',
+                    background: 'var(--chip-neutral-bg)',
+                    borderRadius: 10, padding: '1px 7px',
+                  }}>{group.length}</span>
+                  <div style={{ flex: 1, height: 1, background: 'var(--line)' }} />
+                </div>
+                {/* カード */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {group.map(m => (
+                    <MaterialCard
+                      key={m.id}
+                      material={m}
+                      units={unitsByMaterial[m.id] || []}
+                      onAddUnit={handleAddUnit}
+                      onEditUnit={setEditUnitTarget}
+                      onDeleteUnit={handleDeleteUnit}
+                      onStatusChange={handleStatusChange}
+                      onEditMaterial={setEditMatTarget}
+                      onDeleteMaterial={handleDeleteMaterial}
+                    />
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </>
       )}
 

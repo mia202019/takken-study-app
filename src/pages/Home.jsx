@@ -1522,7 +1522,17 @@ function AuthedApp() {
   const [sheet, setSheet] = useState(null);
   const [more, setMore] = useState(false);
   const [toast, setToast] = useState(null);
-  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  // レスポンシブブレークポイント管理
+  const [screenSize, setScreenSize] = useState(() => {
+    const w = window.innerWidth;
+    if (w < 768) return 'mobile';
+    if (w < 1024) return 'tablet';
+    return 'desktop';
+  });
+  const isMobile = screenSize === 'mobile';
+  const isTablet = screenSize === 'tablet';
+  const isDesktop = screenSize === 'desktop';
+
   const [hasMaterials, setHasMaterials] = useState(() => loadMaterials().length > 0);
   useEffect(() => {
     const handler = (e) => {
@@ -1567,7 +1577,12 @@ function AuthedApp() {
   }, []);
 
   useEffect(() => {
-    const handler = () => setIsMobile(window.innerWidth < 768);
+    const handler = () => {
+      const w = window.innerWidth;
+      if (w < 768) setScreenSize('mobile');
+      else if (w < 1024) setScreenSize('tablet');
+      else setScreenSize('desktop');
+    };
     window.addEventListener('resize', handler);
     return () => window.removeEventListener('resize', handler);
   }, []);
@@ -1615,11 +1630,24 @@ function AuthedApp() {
     </>
   );
 
+  // Tablet layout: 優先度の高いコンテンツを見やすく配置
+  const tabletHomeContent = (
+    <>
+      <Countdown desktop />
+      <TodayStudy tasks={tasks} onToggle={toggle} onGoSettings={() => setActive('settings')} onGoMaterial={() => setActive('material')} hasSchedule={hasSchedule} nextDate={nextDate} />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, alignItems: 'start' }}>
+        <ImportantTasks />
+        <StatusSummary remainingMin={remainingMin} />
+      </div>
+      <QuickAdd onOpen={handleOpenQuick} desktop />
+    </>
+  );
+
   // Desktop layout: 2-col grid
   const desktopHomeContent = (
     <>
       <Countdown desktop />
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 20, alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: 24, alignItems: 'start' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
           <TodayStudy tasks={tasks} onToggle={toggle} onGoSettings={() => setActive('settings')} onGoMaterial={() => setActive('material')} hasSchedule={hasSchedule} nextDate={nextDate} />
           <QuickAdd onOpen={handleOpenQuick} desktop />
@@ -1632,7 +1660,7 @@ function AuthedApp() {
     </>
   );
 
-  const homeContent = isMobile ? mobileHomeContent : desktopHomeContent;
+  const homeContent = isMobile ? mobileHomeContent : isTablet ? tabletHomeContent : desktopHomeContent;
 
   function renderPage(pageId) {
     if (pageId === 'home')    return homeContent;
@@ -1655,33 +1683,50 @@ function AuthedApp() {
 
   const pageContent = renderPage(active);
 
-  if (isMobile) {
+  // モバイル・タブレット共通のレイアウト（サイドバーなし）
+  if (isMobile || isTablet) {
+    const contentPadding = isMobile ? '0 14px 20px' : '0 20px 28px';
+    const contentGap = isMobile ? 13 : 16;
+    const headerPadding = isMobile ? '4px 16px 12px' : '8px 20px 16px';
+
     return (
       <div style={{ height: '100dvh', display: 'flex', flexDirection: 'column', background: 'var(--app-bg)' }}>
-        {/* status bar */}
-        <div style={{
-          height: 36, flexShrink: 0, display: 'flex', alignItems: 'center',
-          justifyContent: 'space-between', padding: '0 18px',
-          fontSize: 13, fontWeight: 600, background: 'var(--app-bg)',
-        }}>
-          <span>{new Date().getHours()}:{String(new Date().getMinutes()).padStart(2,'0')}</span>
-          <span style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
-            <Icon name="spark" size={13} stroke={1.6} />
-            <Icon name="bell" size={13} stroke={1.6} />
-          </span>
-        </div>
+        {/* status bar - モバイルのみ */}
+        {isMobile && (
+          <div style={{
+            height: 36, flexShrink: 0, display: 'flex', alignItems: 'center',
+            justifyContent: 'space-between', padding: '0 18px',
+            fontSize: 13, fontWeight: 600, background: 'var(--app-bg)',
+          }}>
+            <span>{new Date().getHours()}:{String(new Date().getMinutes()).padStart(2,'0')}</span>
+            <span style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+              <Icon name="spark" size={13} stroke={1.6} />
+              <Icon name="bell" size={13} stroke={1.6} />
+            </span>
+          </div>
+        )}
         {/* header */}
-        <header style={{ padding: '4px 16px 12px' }}>
+        <header style={{ padding: headerPadding }}>
           <div style={{ fontSize: 12, color: 'var(--ink-3)', marginBottom: active === 'home' ? 8 : 4 }}>
             {fmtMD(TODAY)}（{weekday(TODAY)}）
           </div>
           {active === 'home'
-            ? <CoachBubble tasks={tasks} hasSchedule={hasSchedule} hasMaterials={hasMaterials} desktop={false} />
-            : <div style={{ fontSize: 19, fontWeight: 700 }}>{NAV.find(n => n.id === active)?.label}</div>
+            ? <CoachBubble tasks={tasks} hasSchedule={hasSchedule} hasMaterials={hasMaterials} desktop={isTablet} />
+            : <div style={{ fontSize: isTablet ? 21 : 19, fontWeight: 700 }}>{NAV.find(n => n.id === active)?.label}</div>
           }
         </header>
         {/* scrollable content */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '0 14px 20px', display: 'flex', flexDirection: 'column', gap: 13 }}>
+        <div style={{
+          flex: 1,
+          overflowY: 'auto',
+          padding: contentPadding,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: contentGap,
+          maxWidth: isTablet ? '900px' : 'none',
+          margin: isTablet ? '0 auto' : '0',
+          width: '100%',
+        }}>
           {pageContent}
           {active === 'home' && (
             <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--ink-4)', padding: '4px 0 8px' }}>
@@ -1690,7 +1735,7 @@ function AuthedApp() {
           )}
         </div>
         <BottomNav active={active} onNav={setActive} onMore={() => setMore(true)} />
-        {sheet && <QuickAddSheet kind={sheet} mobile onClose={() => setSheet(null)} onSubmit={handleSubmit} />}
+        {sheet && <QuickAddSheet kind={sheet} mobile={isMobile} onClose={() => setSheet(null)} onSubmit={handleSubmit} />}
         {more && <MoreMenu active={active} onNav={setActive} onClose={() => setMore(false)} />}
         <Toast msg={toast} />
         {showOnboarding && (
@@ -1703,31 +1748,47 @@ function AuthedApp() {
     );
   }
 
-  // Desktop
+  // Desktop（サイドバー付き）
   return (
     <div style={{ height: '100dvh', display: 'flex', background: 'var(--app-bg)' }}>
       <Sidebar active={active} onNav={setActive} />
       <main style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, padding: '20px 32px 16px' }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          gap: 20,
+          padding: '24px 36px 18px',
+        }}>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 12.5, color: 'var(--ink-3)', marginBottom: active === 'home' ? 8 : 0 }}>
+            <div style={{ fontSize: 12.5, color: 'var(--ink-3)', marginBottom: active === 'home' ? 10 : 2 }}>
               {fmtMD(TODAY)}（{weekday(TODAY)}）
             </div>
             {active === 'home'
               ? <CoachBubble tasks={tasks} hasSchedule={hasSchedule} hasMaterials={hasMaterials} desktop />
               : <div>
-                  <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, letterSpacing: '-.01em' }}>{NAV.find(n => n.id === active)?.label}</h1>
+                  <h1 style={{ margin: 0, fontSize: 24, fontWeight: 700, letterSpacing: '-.01em' }}>{NAV.find(n => n.id === active)?.label}</h1>
                 </div>
             }
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0, marginTop: 4 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0, marginTop: 4 }}>
             <button className="tk-icon-btn"><Icon name="bell" size={19} stroke={1.7} /></button>
-            <button onClick={() => setSheet('task')} className="tk-btn-primary" style={{ flex: 'none', width: 'auto', padding: '10px 16px', display: 'inline-flex', alignItems: 'center', gap: 7 }}>
+            <button onClick={() => setSheet('task')} className="tk-btn-primary" style={{ flex: 'none', width: 'auto', padding: '11px 18px', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
               <Icon name="plus" size={17} stroke={2.2} /> 記録する
             </button>
           </div>
         </div>
-        <div style={{ flex: 1, overflowY: 'auto', padding: '0 32px 28px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+        <div style={{
+          flex: 1,
+          overflowY: 'auto',
+          padding: '0 36px 32px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 24,
+          maxWidth: '1400px',
+          margin: '0 auto',
+          width: '100%',
+        }}>
           {pageContent}
         </div>
       </main>

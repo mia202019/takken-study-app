@@ -57,6 +57,23 @@
   --tracking-normal: 0;
   --tracking-wide: 0.02em;
   --tracking-wider: 0.04em;
+
+  /* レスポンシブブレークポイント */
+  --bp-mobile: 480px;
+  --bp-tablet: 768px;
+  --bp-desktop: 1024px;
+  --bp-wide: 1280px;
+
+  /* レスポンシブ余白 */
+  --spacing-mobile: 14px;
+  --spacing-tablet: 20px;
+  --spacing-desktop: 28px;
+
+  /* コンテナ幅 */
+  --container-sm: 640px;
+  --container-md: 768px;
+  --container-lg: 1024px;
+  --container-xl: 1280px;
 }
 
 * {
@@ -95,14 +112,29 @@ body {
 .tk-card {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 16px;
-  padding: 18px;
+  border-radius: 14px;
+  padding: 16px;
   box-shadow: var(--shadow-sm);
   transition: box-shadow var(--transition-base), border-color var(--transition-base);
 }
 
 .tk-card:hover {
   box-shadow: var(--shadow-md);
+}
+
+/* タブレット以上 */
+@media (min-width: 768px) {
+  .tk-card {
+    border-radius: 16px;
+    padding: 18px;
+  }
+}
+
+/* デスクトップ以上 */
+@media (min-width: 1024px) {
+  .tk-card {
+    padding: 20px;
+  }
 }
 
 .tk-quick {
@@ -403,4 +435,133 @@ button, a, [role="button"] {
   background: var(--surface);
   opacity: 0.5;
   border-radius: inherit;
+}
+
+/* レスポンシブユーティリティ */
+.tk-hide-mobile {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .tk-hide-mobile {
+    display: block;
+  }
+  .tk-hide-tablet {
+    display: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  .tk-hide-desktop {
+    display: none;
+  }
+}
+
+/* レスポンシブグリッド */
+.tk-grid {
+  display: grid;
+  gap: 14px;
+}
+
+@media (min-width: 768px) {
+  .tk-grid {
+    gap: 20px;
+  }
+  .tk-grid-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .tk-grid {
+    gap: 24px;
+  }
+  .tk-grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* レスポンシブコンテナ */
+.tk-container {
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 var(--spacing-mobile);
+}
+
+@media (min-width: 768px) {
+  .tk-container {
+    padding: 0 var(--spacing-tablet);
+    max-width: var(--container-md);
+  }
+}
+
+@media (min-width: 1024px) {
+  .tk-container {
+    padding: 0 var(--spacing-desktop);
+    max-width: var(--container-lg);
+  }
+}
+
+/* レスポンシブテキストサイズ */
+@media (min-width: 768px) {
+  .tk-heading-1 {
+    font-size: 32px;
+  }
+  .tk-heading-2 {
+    font-size: 24px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .tk-heading-1 {
+    font-size: 36px;
+  }
+  .tk-heading-2 {
+    font-size: 28px;
+  }
+}
+
+/* タッチデバイス最適化 */
+@media (hover: none) and (pointer: coarse) {
+  /* タッチデバイスではホバーエフェクトを無効化 */
+  .tk-card:hover {
+    box-shadow: var(--shadow-sm);
+  }
+
+  .tk-btn-primary:hover,
+  .tk-btn-ghost:hover,
+  .tk-icon-btn:hover {
+    transform: none;
+  }
+
+  /* タップ時のフィードバックを強化 */
+  .tk-btn-primary:active,
+  .tk-btn-ghost:active,
+  .tk-icon-btn:active {
+    opacity: 0.8;
+    transform: scale(0.98);
+  }
+}
+
+/* 小型モバイル対応 */
+@media (max-width: 375px) {
+  .tk-card {
+    padding: 14px;
+    border-radius: 12px;
+  }
+
+  .tk-heading-2 {
+    font-size: 20px;
+  }
+
+  .tk-heading-3 {
+    font-size: 16px;
+  }
+}
+
+/* 大画面対応 */
+@media (min-width: 1280px) {
+  .tk-container {
+    max-width: var(--container-xl);
+  }
 }

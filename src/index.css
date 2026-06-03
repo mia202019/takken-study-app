@@ -10,32 +10,86 @@
   --line-strong: #d9d2c5;
   --track: #ece7dd;
   --chip-neutral-bg: #f3efe7;
-  --accent: #3d5a8a;
-  --accent-bg: #eef1f8;
+  --accent: #335080;        /* より濃く（コントラスト改善） */
+  --accent-hover: #2a4268;  /* ホバー時 */
+  --accent-bg: #e8edf6;
   --band: #eef1f8;
   --band-ink: #2c3a52;
   --band-soft: #5a6f8a;
   --band-line: #d6ddf0;
-  --cat-gyo: #3d5a8a;       --cat-gyo-bg: #eef1f8;
-  --cat-kenri: #3a7a5a;     --cat-kenri-bg: #ecf5f0;
-  --cat-horei: #8a6a3d;     --cat-horei-bg: #f5f0e8;
-  --cat-zei: #6a7a3a;       --cat-zei-bg: #f0f3e8;
-  --warn: #b06020;          --warn-bg: #fdf0e4;
-  --ok: #3a7a5a;
-  --carry: #7a6a2a;         --carry-bg: #f5f0e0;
+  --cat-gyo: #335080;       --cat-gyo-bg: #e8edf6;
+  --cat-kenri: #2d6b4d;     --cat-kenri-bg: #e6f3ed;
+  --cat-horei: #7a5d32;     --cat-horei-bg: #f3ede3;
+  --cat-zei: #5d6b32;       --cat-zei-bg: #eff2e3;
+  --warn: #a55515;          --warn-bg: #fdf0e4;
+  --ok: #2d6b4d;
+  --carry: #6d5d25;         --carry-bg: #f5f0e0;
   --check-bg: #f1ede5;
   --check-line: #cfc7b9;
+
+  /* シャドウシステム */
+  --shadow-sm: 0 1px 3px rgba(45, 42, 37, 0.06), 0 1px 2px rgba(45, 42, 37, 0.04);
+  --shadow-md: 0 4px 12px rgba(45, 42, 37, 0.08), 0 2px 4px rgba(45, 42, 37, 0.04);
+  --shadow-lg: 0 8px 24px rgba(45, 42, 37, 0.12), 0 4px 8px rgba(45, 42, 37, 0.06);
+  --shadow-xl: 0 20px 48px rgba(45, 42, 37, 0.16), 0 8px 16px rgba(45, 42, 37, 0.08);
+
+  /* トランジション */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* タイポグラフィスケール */
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-base: 14px;
+  --text-lg: 16px;
+  --text-xl: 18px;
+  --text-2xl: 22px;
+  --text-3xl: 28px;
+
+  /* 行間 */
+  --leading-tight: 1.25;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.75;
+
+  /* 字間 */
+  --tracking-tight: -0.01em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.02em;
+  --tracking-wider: 0.04em;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
 html, body, #root { height: 100%; }
+
 body {
   font-family: 'Zen Kaku Gothic New', -apple-system, BlinkMacSystemFont,
     'Hiragino Kaku Gothic ProN', sans-serif;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   color: var(--ink-1);
   background: var(--app-bg);
+}
+
+/* アクセシビリティ：キーボードフォーカスの可視化 */
+*:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* アニメーション削減の対応 */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 .tk-card {
@@ -43,54 +97,310 @@ body {
   border: 1px solid var(--line);
   border-radius: 16px;
   padding: 18px;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-base), border-color var(--transition-base);
+}
+
+.tk-card:hover {
+  box-shadow: var(--shadow-md);
 }
 
 .tk-quick {
-  display: flex; flex-direction: column; align-items: center; gap: 7px;
-  padding: 14px 8px; border: 1px solid var(--line); border-radius: 13px;
-  background: var(--surface-elevated); cursor: pointer; font-family: inherit;
-  transition: border-color .15s, transform .1s, box-shadow .15s; text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+  padding: 14px 12px;
+  min-height: 44px; /* タッチターゲット最適化 */
+  border: 1.5px solid var(--line);
+  border-radius: 13px;
+  background: var(--surface-elevated);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all var(--transition-base);
+  text-align: center;
+  box-shadow: var(--shadow-sm);
 }
-.tk-quick:hover { border-color: var(--accent); box-shadow: 0 2px 10px rgba(60,45,30,.06); }
-.tk-quick:active { transform: translateY(1px); }
+
+.tk-quick:hover {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.tk-quick:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+.tk-quick:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
 .tk-quick-ic {
-  width: 38px; height: 38px; border-radius: 11px;
-  display: flex; align-items: center; justify-content: center;
-  background: var(--accent-bg); color: var(--accent);
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-bg);
+  color: var(--accent);
+  transition: all var(--transition-fast);
+}
+
+.tk-quick:hover .tk-quick-ic {
+  background: var(--accent);
+  color: white;
+  transform: scale(1.05);
 }
 
 .tk-input {
-  width: 100%; padding: 11px 13px; border-radius: 10px;
+  width: 100%;
+  min-height: 44px; /* タッチターゲット最適化 */
+  padding: 11px 14px;
+  border-radius: 10px;
   border: 1.5px solid var(--line-strong);
-  background: var(--surface-elevated); font-family: inherit;
-  font-size: 14px; color: var(--ink-1); transition: border-color .15s;
+  background: var(--surface-elevated);
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--ink-1);
+  transition: all var(--transition-base);
 }
-.tk-input::placeholder { color: var(--ink-4); }
-.tk-input:focus { outline: none; border-color: var(--accent); }
+
+.tk-input::placeholder {
+  color: var(--ink-4);
+}
+
+.tk-input:hover {
+  border-color: var(--accent);
+}
+
+.tk-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
 
 .tk-btn-primary {
-  flex: 1; padding: 12px; border-radius: 11px; border: none; cursor: pointer;
-  background: var(--accent); color: #fff; font-family: inherit;
-  font-size: 14px; font-weight: 700; transition: filter .15s, transform .1s;
+  flex: 1;
+  min-height: 44px; /* タッチターゲット最適化 */
+  padding: 12px 18px;
+  border-radius: 11px;
+  border: none;
+  cursor: pointer;
+  background: var(--accent);
+  color: #fff;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-base);
 }
-.tk-btn-primary:hover { filter: brightness(1.1); }
-.tk-btn-primary:active { transform: translateY(1px); }
+
+.tk-btn-primary:hover {
+  background: var(--accent-hover);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.tk-btn-primary:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+.tk-btn-primary:focus-visible {
+  box-shadow: 0 0 0 3px var(--accent-bg), var(--shadow-sm);
+}
+
+.tk-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
 
 .tk-btn-ghost {
-  flex: 1; padding: 12px; border-radius: 11px; border: 1px solid var(--line-strong);
-  cursor: pointer; background: transparent; color: var(--ink-2);
-  font-family: inherit; font-size: 14px; font-weight: 600;
+  flex: 1;
+  min-height: 44px; /* タッチターゲット最適化 */
+  padding: 12px 18px;
+  border-radius: 11px;
+  border: 1.5px solid var(--line-strong);
+  cursor: pointer;
+  background: transparent;
+  color: var(--ink-2);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all var(--transition-base);
 }
-.tk-btn-ghost:hover { background: var(--chip-neutral-bg); }
+
+.tk-btn-ghost:hover {
+  background: var(--chip-neutral-bg);
+  border-color: var(--ink-3);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.tk-btn-ghost:active {
+  transform: translateY(0);
+}
+
+.tk-btn-ghost:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
 
 .tk-icon-btn {
-  width: 40px; height: 40px; border-radius: 11px; border: 1px solid var(--line);
-  cursor: pointer; background: var(--surface); color: var(--ink-2);
-  display: flex; align-items: center; justify-content: center;
-  transition: border-color .15s;
+  width: 44px; /* タッチターゲット最適化 */
+  height: 44px;
+  border-radius: 11px;
+  border: 1.5px solid var(--line);
+  cursor: pointer;
+  background: var(--surface);
+  color: var(--ink-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-sm);
 }
-.tk-icon-btn:hover { border-color: var(--accent); color: var(--accent); }
 
-@keyframes tkFade { from { opacity: 0; } to { opacity: 1; } }
-@keyframes tkSheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-@keyframes tkPop { from { transform: scale(.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.tk-icon-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-bg);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.tk-icon-btn:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+.tk-icon-btn:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+/* アニメーション定義 */
+@keyframes tkFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes tkSheetUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes tkPop {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes tkSlideIn {
+  from {
+    transform: translateX(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* スムーズスクロール */
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* ユーティリティクラス */
+.tk-heading-1 {
+  font-size: var(--text-3xl);
+  font-weight: 800;
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--ink-1);
+}
+
+.tk-heading-2 {
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+  color: var(--ink-1);
+}
+
+.tk-heading-3 {
+  font-size: var(--text-xl);
+  font-weight: 700;
+  line-height: var(--leading-normal);
+  letter-spacing: var(--tracking-normal);
+  color: var(--ink-1);
+}
+
+.tk-body-large {
+  font-size: var(--text-lg);
+  line-height: var(--leading-normal);
+  color: var(--ink-2);
+}
+
+.tk-body {
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  color: var(--ink-2);
+}
+
+.tk-body-small {
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--ink-3);
+}
+
+.tk-caption {
+  font-size: var(--text-xs);
+  line-height: var(--leading-normal);
+  color: var(--ink-4);
+}
+
+/* インタラクティブ要素のベーススタイル */
+button, a, [role="button"] {
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+/* ローディング状態 */
+.tk-loading {
+  position: relative;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.tk-loading::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--surface);
+  opacity: 0.5;
+  border-radius: inherit;
+}

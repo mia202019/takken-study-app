@@ -58,11 +58,38 @@ export function CloudSyncProvider({ children }) {
     return () => listener.subscription.unsubscribe();
   }, []);
 
+  // ── クラウドからロードする内部ヘルパー ───────────────────────────
+  const loadAndRestore = useCallback(async (userId, cloudUpdatedAt) => {
+    syncingRef.current = true;
+    if (debounceRef.current) { clearTimeout(debounceRef.current); debounceRef.current = null; }
+    const { data, error } = await loadFromCloud(userId);
+    if (!error && data) {
+      restoreLocalStorage(data);
+      localStorage.setItem(LS_SYNC_TS_KEY, cloudUpdatedAt);
+      setAutoLoaded(true);
+      setTimeout(() => setAutoLoaded(false), 4000);
+    }
+    setTimeout(() => { syncingRef.current = false; }, 2000);
+  }, []);
+
   // ── デバウンス auto-save ──────────────────────────────────────
+  // 保存直前にクラウドが新しければ保存をキャンセルしてロード（古いデータの上書き防止）
   const triggerAutoSave = useCallback((userId) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     setSaveStatus('saving');
     debounceRef.current = setTimeout(async () => {
+      if (syncingRef.current) { setSaveStatus('idle'); return; }
+
+      // 保存前にクラウドのタイムスタンプを確認
+      const { updatedAt: cloudTs } = await getCloudUpdatedAt(userId);
+      const localTs = localStorage.getItem(LS_SYNC_TS_KEY) || '';
+      if (cloudTs && cloudTs > localTs) {
+        // クラウドの方が新しい → 保存せずロード（リセットや他端末の変更を優先）
+        setSaveStatus('idle');
+        await loadAndRestore(userId, cloudTs);
+        return;
+      }
+
       const { error } = await saveToCloud(userId);
       if (error) {
         setSaveStatus('error');
@@ -72,7 +99,7 @@ export function CloudSyncProvider({ children }) {
         setTimeout(() => setSaveStatus('idle'), 3000);
       }
     }, DEBOUNCE_MS);
-  }, []);
+  }, [loadAndRestore]);
 
   // localStorage 変更を監視して auto-save
   useEffect(() => {

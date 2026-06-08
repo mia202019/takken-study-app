@@ -138,29 +138,59 @@ export const TEXTBOOK_CATALOG = [
     publisher: '一般財団法人 不動産適正取引推進機構',
     type: 'workbook',
     status: 'using',
-    description: '宅建試験の公式過去問と正解番号。年度別に全問掲載。演習・答え合わせに活用。',
+    description: '宅建試験の公式過去問と正解番号。年度別に全50問掲載（宅建業法20問・権利関係14問・法令8問・税その他8問）。本試験形式で演習できる。',
     url: 'https://www.retio.or.jp/exam/past_ques_ans/other/',
     units: [
-      {
-        chapterTitle: '権利関係 過去問', subjectId: 'kenri',
-        url: 'https://www.retio.or.jp/exam/past_ques_ans/other/',
-        keywords: ['意思表示', '代理', '時効', '債務不履行', '売買', '賃貸借', '借地借家法', '区分所有法', '相続', '抵当権', '権利関係'],
-      },
-      {
-        chapterTitle: '宅建業法 過去問', subjectId: 'gyo',
-        url: 'https://www.retio.or.jp/exam/past_ques_ans/other/',
-        keywords: ['免許', '宅建士', '営業保証金', '保証協会', '媒介契約', '重要事項説明', '37条書面', '8種制限', '報酬額', '監督処分', '罰則', '宅建業法'],
-      },
-      {
-        chapterTitle: '法令上の制限 過去問', subjectId: 'horei',
-        url: 'https://www.retio.or.jp/exam/past_ques_ans/other/',
-        keywords: ['都市計画法', '建築基準法', '国土利用計画法', '農地法', '宅地造成', '土地区画整理法', '法令'],
-      },
-      {
-        chapterTitle: '税・その他 過去問', subjectId: 'zei',
-        url: 'https://www.retio.or.jp/exam/past_ques_ans/other/',
-        keywords: ['不動産取得税', '固定資産税', '登録免許税', '印紙税', '地価公示', '不動産鑑定評価', '税'],
-      },
+      // 令和6年（2024年）
+      { chapterTitle: '令和6年度（2024年）宅建業法',     subjectId: 'gyo',   estimatedMinutes: 60, url: 'https://www.retio.or.jp/exam/past_ques_ans/r06.html', keywords: ['令和6年', '2024年', '宅建業法'] },
+      { chapterTitle: '令和6年度（2024年）権利関係',     subjectId: 'kenri', estimatedMinutes: 50, url: 'https://www.retio.or.jp/exam/past_ques_ans/r06.html', keywords: ['令和6年', '2024年', '権利関係'] },
+      { chapterTitle: '令和6年度（2024年）法令上の制限', subjectId: 'horei', estimatedMinutes: 35, url: 'https://www.retio.or.jp/exam/past_ques_ans/r06.html', keywords: ['令和6年', '2024年', '法令'] },
+      { chapterTitle: '令和6年度（2024年）税・その他',   subjectId: 'zei',   estimatedMinutes: 30, url: 'https://www.retio.or.jp/exam/past_ques_ans/r06.html', keywords: ['令和6年', '2024年', '税'] },
+      // 令和5年（2023年）
+      { chapterTitle: '令和5年度（2023年）宅建業法',     subjectId: 'gyo',   estimatedMinutes: 60, url: 'https://www.retio.or.jp/exam/past_ques_ans/r05.html', keywords: ['令和5年', '2023年', '宅建業法'] },
+      { chapterTitle: '令和5年度（2023年）権利関係',     subjectId: 'kenri', estimatedMinutes: 50, url: 'https://www.retio.or.jp/exam/past_ques_ans/r05.html', keywords: ['令和5年', '2023年', '権利関係'] },
+      { chapterTitle: '令和5年度（2023年）法令上の制限', subjectId: 'horei', estimatedMinutes: 35, url: 'https://www.retio.or.jp/exam/past_ques_ans/r05.html', keywords: ['令和5年', '2023年', '法令'] },
+      { chapterTitle: '令和5年度（2023年）税・その他',   subjectId: 'zei',   estimatedMinutes: 30, url: 'https://www.retio.or.jp/exam/past_ques_ans/r05.html', keywords: ['令和5年', '2023年', '税'] },
+      // 令和4年（2022年）
+      { chapterTitle: '令和4年度（2022年）宅建業法',     subjectId: 'gyo',   estimatedMinutes: 60, url: 'https://www.retio.or.jp/exam/past_ques_ans/r04.html', keywords: ['令和4年', '2022年', '宅建業法'] },
+      { chapterTitle: '令和4年度（2022年）権利関係',     subjectId: 'kenri', estimatedMinutes: 50, url: 'https://www.retio.or.jp/exam/past_ques_ans/r04.html', keywords: ['令和4年', '2022年', '権利関係'] },
+      { chapterTitle: '令和4年度（2022年）法令上の制限', subjectId: 'horei', estimatedMinutes: 35, url: 'https://www.retio.or.jp/exam/past_ques_ans/r04.html', keywords: ['令和4年', '2022年', '法令'] },
+      { chapterTitle: '令和4年度（2022年）税・その他',   subjectId: 'zei',   estimatedMinutes: 30, url: 'https://www.retio.or.jp/exam/past_ques_ans/r04.html', keywords: ['令和4年', '2022年', '税'] },
+      // 令和3年（2021年）
+      { chapterTitle: '令和3年度（2021年）宅建業法',     subjectId: 'gyo',   estimatedMinutes: 60, url: 'https://www.retio.or.jp/exam/past_ques_ans/r03.html', keywords: ['令和3年', '2021年', '宅建業法'] },
+      { chapterTitle: '令和3年度（2021年）権利関係',     subjectId: 'kenri', estimatedMinutes: 50, url: 'https://www.retio.or.jp/exam/past_ques_ans/r03.html', keywords: ['令和3年', '2021年', '権利関係'] },
+      { chapterTitle: '令和3年度（2021年）法令上の制限', subjectId: 'horei', estimatedMinutes: 35, url: 'https://www.retio.or.jp/exam/past_ques_ans/r03.html', keywords: ['令和3年', '2021年', '法令'] },
+      { chapterTitle: '令和3年度（2021年）税・その他',   subjectId: 'zei',   estimatedMinutes: 30, url: 'https://www.retio.or.jp/exam/past_ques_ans/r03.html', keywords: ['令和3年', '2021年', '税'] },
+      // 令和2年（2020年）
+      { chapterTitle: '令和2年度（2020年）宅建業法',     subjectId: 'gyo',   estimatedMinutes: 60, url: 'https://www.retio.or.jp/exam/past_ques_ans/r02.html', keywords: ['令和2年', '2020年', '宅建業法'] },
+      { chapterTitle: '令和2年度（2020年）権利関係',     subjectId: 'kenri', estimatedMinutes: 50, url: 'https://www.retio.or.jp/exam/past_ques_ans/r02.html', keywords: ['令和2年', '2020年', '権利関係'] },
+      { chapterTitle: '令和2年度（2020年）法令上の制限', subjectId: 'horei', estimatedMinutes: 35, url: 'https://www.retio.or.jp/exam/past_ques_ans/r02.html', keywords: ['令和2年', '2020年', '法令'] },
+      { chapterTitle: '令和2年度（2020年）税・その他',   subjectId: 'zei',   estimatedMinutes: 30, url: 'https://www.retio.or.jp/exam/past_ques_ans/r02.html', keywords: ['令和2年', '2020年', '税'] },
+      // 令和元年（2019年）
+      { chapterTitle: '令和元年度（2019年）宅建業法',     subjectId: 'gyo',   estimatedMinutes: 60, url: 'https://www.retio.or.jp/exam/past_ques_ans/r01.html', keywords: ['令和元年', '2019年', '宅建業法'] },
+      { chapterTitle: '令和元年度（2019年）権利関係',     subjectId: 'kenri', estimatedMinutes: 50, url: 'https://www.retio.or.jp/exam/past_ques_ans/r01.html', keywords: ['令和元年', '2019年', '権利関係'] },
+      { chapterTitle: '令和元年度（2019年）法令上の制限', subjectId: 'horei', estimatedMinutes: 35, url: 'https://www.retio.or.jp/exam/past_ques_ans/r01.html', keywords: ['令和元年', '2019年', '法令'] },
+      { chapterTitle: '令和元年度（2019年）税・その他',   subjectId: 'zei',   estimatedMinutes: 30, url: 'https://www.retio.or.jp/exam/past_ques_ans/r01.html', keywords: ['令和元年', '2019年', '税'] },
+      // 平成30年（2018年）
+      { chapterTitle: '平成30年度（2018年）宅建業法',     subjectId: 'gyo',   estimatedMinutes: 60, url: 'https://www.retio.or.jp/exam/past_ques_ans/h30.html', keywords: ['平成30年', '2018年', '宅建業法'] },
+      { chapterTitle: '平成30年度（2018年）権利関係',     subjectId: 'kenri', estimatedMinutes: 50, url: 'https://www.retio.or.jp/exam/past_ques_ans/h30.html', keywords: ['平成30年', '2018年', '権利関係'] },
+      { chapterTitle: '平成30年度（2018年）法令上の制限', subjectId: 'horei', estimatedMinutes: 35, url: 'https://www.retio.or.jp/exam/past_ques_ans/h30.html', keywords: ['平成30年', '2018年', '法令'] },
+      { chapterTitle: '平成30年度（2018年）税・その他',   subjectId: 'zei',   estimatedMinutes: 30, url: 'https://www.retio.or.jp/exam/past_ques_ans/h30.html', keywords: ['平成30年', '2018年', '税'] },
+      // 平成29年（2017年）
+      { chapterTitle: '平成29年度（2017年）宅建業法',     subjectId: 'gyo',   estimatedMinutes: 60, url: 'https://www.retio.or.jp/exam/past_ques_ans/h29.html', keywords: ['平成29年', '2017年', '宅建業法'] },
+      { chapterTitle: '平成29年度（2017年）権利関係',     subjectId: 'kenri', estimatedMinutes: 50, url: 'https://www.retio.or.jp/exam/past_ques_ans/h29.html', keywords: ['平成29年', '2017年', '権利関係'] },
+      { chapterTitle: '平成29年度（2017年）法令上の制限', subjectId: 'horei', estimatedMinutes: 35, url: 'https://www.retio.or.jp/exam/past_ques_ans/h29.html', keywords: ['平成29年', '2017年', '法令'] },
+      { chapterTitle: '平成29年度（2017年）税・その他',   subjectId: 'zei',   estimatedMinutes: 30, url: 'https://www.retio.or.jp/exam/past_ques_ans/h29.html', keywords: ['平成29年', '2017年', '税'] },
+      // 平成28年（2016年）
+      { chapterTitle: '平成28年度（2016年）宅建業法',     subjectId: 'gyo',   estimatedMinutes: 60, url: 'https://www.retio.or.jp/exam/past_ques_ans/h28.html', keywords: ['平成28年', '2016年', '宅建業法'] },
+      { chapterTitle: '平成28年度（2016年）権利関係',     subjectId: 'kenri', estimatedMinutes: 50, url: 'https://www.retio.or.jp/exam/past_ques_ans/h28.html', keywords: ['平成28年', '2016年', '権利関係'] },
+      { chapterTitle: '平成28年度（2016年）法令上の制限', subjectId: 'horei', estimatedMinutes: 35, url: 'https://www.retio.or.jp/exam/past_ques_ans/h28.html', keywords: ['平成28年', '2016年', '法令'] },
+      { chapterTitle: '平成28年度（2016年）税・その他',   subjectId: 'zei',   estimatedMinutes: 30, url: 'https://www.retio.or.jp/exam/past_ques_ans/h28.html', keywords: ['平成28年', '2016年', '税'] },
+      // 平成27年（2015年）
+      { chapterTitle: '平成27年度（2015年）宅建業法',     subjectId: 'gyo',   estimatedMinutes: 60, url: 'https://www.retio.or.jp/exam/past_ques_ans/h27.html', keywords: ['平成27年', '2015年', '宅建業法'] },
+      { chapterTitle: '平成27年度（2015年）権利関係',     subjectId: 'kenri', estimatedMinutes: 50, url: 'https://www.retio.or.jp/exam/past_ques_ans/h27.html', keywords: ['平成27年', '2015年', '権利関係'] },
+      { chapterTitle: '平成27年度（2015年）法令上の制限', subjectId: 'horei', estimatedMinutes: 35, url: 'https://www.retio.or.jp/exam/past_ques_ans/h27.html', keywords: ['平成27年', '2015年', '法令'] },
+      { chapterTitle: '平成27年度（2015年）税・その他',   subjectId: 'zei',   estimatedMinutes: 30, url: 'https://www.retio.or.jp/exam/past_ques_ans/h27.html', keywords: ['平成27年', '2015年', '税'] },
     ],
   },
 

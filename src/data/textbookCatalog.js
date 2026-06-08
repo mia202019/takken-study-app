@@ -11,8 +11,8 @@
 export const TEXTBOOK_CATALOG = [
   {
     id: 'cat-tac-kyokasho-2026',
-    title: '2026年度版 みんなが欲しかった！宅建士の教科書',
-    shortTitle: '2026みんなの宅建',
+    title: '【教科書】2026年度版 みんなが欲しかった！宅建士の教科書',
+    shortTitle: '【教科書】みんなの宅建',
     publisher: 'TAC出版',
     type: 'textbook',
     status: 'using',
@@ -71,8 +71,8 @@ export const TEXTBOOK_CATALOG = [
   },
   {
     id: 'cat-tac-mondaishu-2026',
-    title: '2026年度版 みんなが欲しかった！宅建士の12年過去問題集',
-    shortTitle: '2026みんなの過去問',
+    title: '【問題集】2026年度版 みんなが欲しかった！宅建士の12年過去問題集',
+    shortTitle: '【問題集】みんなの過去問',
     publisher: 'TAC出版',
     type: 'workbook',
     status: 'using',
@@ -133,8 +133,8 @@ export const TEXTBOOK_CATALOG = [
   // ── 公式過去問（RETIO）──────────────────────────────────────────────
   {
     id: 'cat-retio-kakomon',
-    title: '公式過去問（RETIO）',
-    shortTitle: '公式過去問',
+    title: '【公式問題】RETIO 宅建試験 過去問題・正解番号',
+    shortTitle: '【公式】RETIO過去問',
     publisher: '一般財団法人 不動産適正取引推進機構',
     type: 'workbook',
     status: 'using',
@@ -167,8 +167,8 @@ export const TEXTBOOK_CATALOG = [
   // ── ゆーき大学（YouTube）─────────────────────────────────────────
   {
     id: 'cat-yuuki-youtube',
-    title: 'マジでイケてる宅建講座【ゆーき大学】',
-    shortTitle: 'ゆーき大学',
+    title: '【YouTube】マジでイケてる宅建講座【ゆーき大学】',
+    shortTitle: '【YouTube】ゆーき大学',
     publisher: 'YouTube（ゆーき大学）',
     type: 'video',
     status: 'using',

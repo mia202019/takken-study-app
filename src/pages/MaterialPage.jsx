@@ -996,7 +996,14 @@ export default function MaterialPage({ onGoSettings }) {
     setCatalogPreview(null);
     setShowCatalogSheet(false);
     flash(`「${entry.shortTitle}」を追加しました（${entry.units.length}ユニット）`);
-  }, [flash]);
+
+    // スケジュール未設定なら設定画面へ自動遷移
+    setTimeout(() => {
+      if (!hasSchedule && onGoSettings) {
+        onGoSettings();
+      }
+    }, 1500);
+  }, [flash, hasSchedule, onGoSettings]);
 
   const handleEditMaterial = useCallback((form) => {
     setMaterials(editMaterial(editMatTarget.id, form));

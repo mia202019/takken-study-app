@@ -994,16 +994,20 @@ export default function MaterialPage({ onGoSettings }) {
     setMaterials(loadMaterials());
     setUnits(loadMaterialUnits());
     setCatalogPreview(null);
-    setShowCatalogSheet(false);
+    // カタログシートは閉じずに選択を続けられるようにする
     flash(`「${entry.shortTitle}」を追加しました（${entry.units.length}ユニット）`);
+  }, [flash]);
 
-    // スケジュール未設定なら設定画面へ自動遷移
-    setTimeout(() => {
-      if (!hasSchedule && onGoSettings) {
+  const handleCloseCatalog = useCallback(() => {
+    setShowCatalogSheet(false);
+    // カタログを閉じた時、教材が追加済み＆スケジュール未設定なら設定画面へ
+    const currentMaterials = loadMaterials();
+    if (currentMaterials.length > 0 && !hasSchedule && onGoSettings) {
+      setTimeout(() => {
         onGoSettings();
-      }
-    }, 1500);
-  }, [flash, hasSchedule, onGoSettings]);
+      }, 500);
+    }
+  }, [hasSchedule, onGoSettings]);
 
   const handleEditMaterial = useCallback((form) => {
     setMaterials(editMaterial(editMatTarget.id, form));
@@ -1224,14 +1228,14 @@ export default function MaterialPage({ onGoSettings }) {
 
       {/* カタログ選択シート（教材あり時の「カタログから追加」ボタン用） */}
       {showCatalogSheet && (
-        <BottomSheet title="教材カタログ" onClose={() => setShowCatalogSheet(false)}>
+        <BottomSheet title="教材カタログ" onClose={handleCloseCatalog}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {TEXTBOOK_CATALOG.map(entry => (
               <CatalogCard
                 key={entry.id}
                 entry={entry}
                 alreadyAdded={addedCatalogIds.has(entry.id)}
-                onAdd={(e) => { handleAddFromCatalog(e); setShowCatalogSheet(false); }}
+                onAdd={handleAddFromCatalog}
                 onPreview={(e) => { setShowCatalogSheet(false); setCatalogPreview(e); }}
               />
             ))}

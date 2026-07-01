@@ -4,8 +4,6 @@ import {
   generateAndSave, loadScheduleMeta, loadStudyStart,
   calculateDynamicPhases, calcPhaseBoundaries, EXAM_DATE,
 } from '../data/scheduleData';
-import CloudSyncPanel from '../components/CloudSyncPanel';
-import { useCloudSync } from '../lib/CloudSyncContext';
 
 // ── Helpers ────────────────────────────────────────────────────────
 
@@ -627,10 +625,129 @@ function ScheduleSection({ onGoHome }) {
   );
 }
 
+// ── Backup / Restore Section ──────────────────────────────────────
+
+function BackupRestoreSection() {
+  const [message, setMessage] = useState(null);
+
+  // エクスポート：全データをJSON形式でダウンロード
+  const handleExport = () => {
+    try {
+      const data = {};
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('takken-')) {
+          try {
+            data[key] = JSON.parse(localStorage.getItem(key));
+          } catch {
+            data[key] = localStorage.getItem(key);
+          }
+        }
+      }
+
+      const jsonStr = JSON.stringify(data, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const date = new Date().toISOString().split('T')[0];
+      a.download = `takken-backup-${date}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      setMessage({ type: 'success', text: 'バックアップファイルをダウンロードしました' });
+      setTimeout(() => setMessage(null), 3000);
+    } catch (err) {
+      setMessage({ type: 'error', text: `エラー: ${err.message}` });
+    }
+  };
+
+  // インポート：JSONファイルからデータを復元
+  const handleImport = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result);
+
+        // データを復元
+        let count = 0;
+        Object.entries(data).forEach(([key, value]) => {
+          if (key.startsWith('takken-')) {
+            localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value));
+            count++;
+          }
+        });
+
+        // UIを更新
+        window.dispatchEvent(new StorageEvent('storage', { key: null }));
+
+        setMessage({ type: 'success', text: `${count}件のデータを復元しました。ページを再読み込みしてください。` });
+
+        // 3秒後に自動リロード
+        setTimeout(() => {
+          window.location.reload();
+        }, 3000);
+      } catch (err) {
+        setMessage({ type: 'error', text: `エラー: ${err.message}` });
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  return (
+    <div>
+      <div style={{ display: 'flex', gap: 10, marginBottom: message ? 12 : 0 }}>
+        <button
+          onClick={handleExport}
+          className="tk-btn-primary"
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            background: 'var(--accent)',
+          }}
+        >
+          <Icon name="download" size={16} stroke={2} />
+          エクスポート
+        </button>
+        <label
+          className="tk-btn-ghost"
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            cursor: 'pointer',
+          }}
+        >
+          <Icon name="upload" size={16} stroke={2} />
+          インポート
+          <input
+            type="file"
+            accept="application/json,.json"
+            onChange={handleImport}
+            style={{ display: 'none' }}
+          />
+        </label>
+      </div>
+
+      {message && (
+        <div style={{
+          padding: '12px 14px', borderRadius: 10,
+          background: message.type === 'success' ? '#f0fff4' : '#fff5f5',
+          border: `1.5px solid ${message.type === 'success' ? 'var(--ok)' : '#e53e3e'}`,
+          fontSize: 12.5,
+          color: message.type === 'success' ? '#276749' : '#c53030',
+          fontWeight: 600,
+        }}>
+          {message.type === 'success' ? '✓ ' : '⚠️ '}{message.text}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Data Reset Section ────────────────────────────────────────────
 
 function DataResetSection() {
-  const { manualSave } = useCloudSync();
   const [step, setStep] = useState(0); // 0=通常 1=1回目確認 2=2回目確認 3=完了
 
   const handleReset = async () => {
@@ -781,11 +898,6 @@ export default function SettingsPage({ onGoHome }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {/* Cloud Sync section */}
-      <div className="tk-card" style={{ borderTop: '3px solid #4285F4' }}>
-        <CloudSyncPanel />
-      </div>
-
       {/* Schedule section */}
       <div className="tk-card" style={{ borderTop: '3px solid var(--ok)' }}>
         <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 6 }}>学習スケジュール</div>
@@ -830,6 +942,15 @@ export default function SettingsPage({ onGoHome }) {
           <InfoRow label="本試験日"       value="2026年10月18日（日）" />
           <InfoRow label="データ保存先"   value="ブラウザ（localStorage）" />
         </div>
+      </div>
+
+      {/* Backup / Restore */}
+      <div className="tk-card">
+        <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 6 }}>バックアップ・復元</div>
+        <p style={{ fontSize: 12.5, color: 'var(--ink-3)', lineHeight: 1.65, marginBottom: 14, margin: '0 0 14px' }}>
+          学習データをJSON形式でエクスポート・インポートできます。機種変更やブラウザ移行時に便利です。
+        </p>
+        <BackupRestoreSection />
       </div>
 
       {/* Data reset */}

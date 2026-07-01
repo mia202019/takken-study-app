@@ -642,9 +642,6 @@ function DataResetSection() {
     }
     keys.forEach(k => localStorage.removeItem(k));
 
-    // クラウドにも空状態を保存（上書き）
-    if (manualSave) await manualSave();
-
     // UIを更新
     window.dispatchEvent(new StorageEvent('storage', { key: null }));
     setStep(3);
@@ -724,8 +721,8 @@ function DataResetSection() {
           データをリセットしますか？
         </p>
         <p style={{ margin: 0, fontSize: 12.5, color: '#7b341e', lineHeight: 1.7 }}>
-          このアカウントの学習データがすべて削除されます。<br />
-          クラウド上のデータも上書きされます。
+          すべての学習データが削除されます。<br />
+          この操作は取り消せません。
         </p>
         <div style={{ display: 'flex', gap: 10 }}>
           <button
@@ -832,7 +829,6 @@ export default function SettingsPage({ onGoHome }) {
           <InfoRow label="対象試験"       value="宅地建物取引士（2026年度）" />
           <InfoRow label="本試験日"       value="2026年10月18日（日）" />
           <InfoRow label="データ保存先"   value="ブラウザ（localStorage）" />
-          <InfoRow label="データ同期"     value="Googleアカウントでクラウド自動同期" />
         </div>
       </div>
 
@@ -840,7 +836,7 @@ export default function SettingsPage({ onGoHome }) {
       <div className="tk-card">
         <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 6, color: '#c53030' }}>データリセット</div>
         <p style={{ fontSize: 12.5, color: 'var(--ink-3)', lineHeight: 1.65, marginBottom: 14, margin: '0 0 14px' }}>
-          このアカウントのすべての学習データを削除します。
+          すべての学習データを削除します。
         </p>
         <DataResetSection />
       </div>
@@ -850,8 +846,8 @@ export default function SettingsPage({ onGoHome }) {
         <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 12 }}>データ管理の注意</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {[
-            'Googleアカウントでログインするとデータが自動でクラウド保存され、複数端末で同期できます',
-            'ブラウザのキャッシュ削除やプライベートモードではローカルデータが消える場合があります。Googleログインで保護することをお勧めします',
+            'データはブラウザのlocalStorageに保存されます。このブラウザでのみ利用可能です',
+            'ブラウザのキャッシュ削除やプライベートモードではデータが消える場合があります。定期的にバックアップすることをお勧めします',
             '教材の本文・問題文・解説を記録する場合は、個人学習用として管理してください。公開・共有・販売する場合は、著作権のある内容を含めないでください。',
           ].map((note, i) => (
             <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>

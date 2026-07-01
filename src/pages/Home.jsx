@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import Icon from '../components/Icon';
-import { useCloudSync } from '../lib/CloudSyncContext';
 import {
   CAT, TYPE, NAV, NAV_PRIMARY,
   FIXED_TASKS, EXAM,
@@ -1057,10 +1056,6 @@ function QuickAddSheet({ kind, mobile, onClose, onSubmit }) {
 // ── Navigation ────────────────────────────────────────────────────
 
 function Sidebar({ active, onNav }) {
-  const { user } = useCloudSync();
-  const avatar = user?.user_metadata?.avatar_url || user?.user_metadata?.picture || null;
-  const name   = user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email || '';
-  const initials = name ? name.slice(0, 1).toUpperCase() : '？';
 
   return (
     <aside style={{
@@ -1092,28 +1087,6 @@ function Sidebar({ active, onNav }) {
           );
         })}
       </nav>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '12px 8px 0', borderTop: '1px solid var(--line)' }}>
-        {avatar ? (
-          <img
-            src={avatar} alt={name}
-            style={{ width: 30, height: 30, borderRadius: '50%', flexShrink: 0, objectFit: 'cover' }}
-          />
-        ) : (
-          <span style={{
-            width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
-            background: 'var(--accent-bg)', color: 'var(--accent)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 13, fontWeight: 700,
-          }}>{initials}</span>
-        )}
-        <div style={{ minWidth: 0 }}>
-          <div style={{
-            fontSize: 12, fontWeight: 600, color: 'var(--ink-1)',
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-          }}>{name || 'ゲスト'}</div>
-          <div style={{ fontSize: 10.5, color: 'var(--ink-4)' }}>ログイン中</div>
-        </div>
-      </div>
     </aside>
   );
 }
@@ -1213,182 +1186,6 @@ function Toast({ msg }) {
     }}>
       <Icon name="check" size={15} stroke={2.4} style={{ color: 'var(--ok)' }} /> {msg}
     </div>
-  );
-}
-
-// ── Login screen ──────────────────────────────────────────────────
-
-function detectInAppBrowser() {
-  const ua = navigator.userAgent || '';
-  return (
-    /FBAN|FBAV|Instagram|Line\/|MicroMessenger|Twitter|Snapchat/i.test(ua) ||
-    (/iPhone|iPad|iPod/i.test(ua) && !/Safari\//i.test(ua) && /AppleWebKit/i.test(ua))
-  );
-}
-
-function LoginScreen() {
-  const { signInWithGoogle, configured } = useCloudSync();
-  const [error, setError] = useState(null);
-  const [copied, setCopied] = useState(false);
-  const isInApp = detectInAppBrowser();
-  const url = window.location.href.split('#')[0];
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 3000);
-    } catch {
-      const el = document.getElementById('ls-url-field');
-      if (el) { el.select(); document.execCommand('copy'); setCopied(true); setTimeout(() => setCopied(false), 3000); }
-    }
-  };
-
-  return (
-    <div style={{
-      minHeight: '100dvh', background: 'var(--app-bg)',
-      display: 'flex', flexDirection: 'column', alignItems: 'center',
-      justifyContent: 'center', padding: '32px 20px',
-    }}>
-      <div style={{ width: '100%', maxWidth: 400, display: 'flex', flexDirection: 'column', gap: 20 }}>
-
-        {/* ロゴ・タイトル */}
-        <div style={{ textAlign: 'center', marginBottom: 8 }}>
-          <div style={{
-            margin: '0 auto 14px', width: 'fit-content',
-            boxShadow: '0 8px 22px rgba(45,42,37,.18), 0 1.5px 4px rgba(45,42,37,.10)',
-            borderRadius: Math.round(64 * 0.2237),
-          }}>
-            <AppIcon size={64} />
-          </div>
-          <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: 'var(--ink-1)' }}>宅建 学習管理</h1>
-          <p style={{ margin: '6px 0 0', fontSize: 13, color: 'var(--ink-3)' }}>2026年度 宅地建物取引士試験</p>
-        </div>
-
-        {/* アプリの目的 */}
-        <div className="tk-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div>
-            <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--ink-1)', marginBottom: 6 }}>
-              宅建の勉強、何から始めればいい？
-            </div>
-            <p style={{ margin: 0, fontSize: 13, color: 'var(--ink-2)', lineHeight: 1.8 }}>
-              このアプリは、<strong>宅建をはじめて学ぶ方</strong>のために作りました。<br />
-              使う教科書や問題集を選ぶだけで、<strong>今日から試験日まで「毎日何を・どのくらい勉強するか」</strong>を自動で作成します。
-            </p>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
-            {[
-              { icon: 'book',     text: '使う教材を選ぶ（教科書・問題集・YouTube）' },
-              { icon: 'calendar', text: '開始日を決めて生成するだけ' },
-              { icon: 'check',    text: '毎日やるべきタスクが自動で表示' },
-              { icon: 'mistake',  text: '間違い記録・弱点分析で効率アップ' },
-            ].map((item, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span style={{
-                  width: 30, height: 30, borderRadius: 8, background: 'var(--accent-bg)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                }}>
-                  <Icon name={item.icon} size={15} stroke={1.8} style={{ color: 'var(--accent)' }} />
-                </span>
-                <span style={{ fontSize: 13, color: 'var(--ink-2)' }}>{item.text}</span>
-              </div>
-            ))}
-          </div>
-          <div style={{
-            padding: '10px 14px', borderRadius: 10,
-            background: 'var(--accent-bg)',
-            fontSize: 12.5, color: 'var(--accent)', fontWeight: 600, lineHeight: 1.6,
-          }}>
-            📅 2026年10月18日（日）の本試験に向けて、<br />一緒に合格を目指しましょう。
-          </div>
-        </div>
-
-        {/* ログインカード */}
-        <div className="tk-card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink-1)' }}>ログインして始める</div>
-          <p style={{ margin: 0, fontSize: 12.5, color: 'var(--ink-3)', lineHeight: 1.7 }}>
-            Google アカウントでログインすると学習データがクラウドに自動保存され、
-            スマホ・PC どちらからでも利用できます。
-          </p>
-
-          {!configured ? (
-            <p style={{ margin: 0, fontSize: 12.5, color: 'var(--warn)', padding: '8px 12px', background: 'var(--warn-bg)', borderRadius: 8 }}>
-              Supabase が未設定のため、ログイン機能が使えません。
-            </p>
-          ) : isInApp ? (
-            /* アプリ内ブラウザ警告 */
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ background: '#fff8e1', border: '1.5px solid #f6c90e', borderRadius: 10, padding: '12px 14px' }}>
-                <p style={{ margin: '0 0 8px', fontSize: 13, fontWeight: 700, color: '#7a5f00' }}>
-                  ⚠️ このブラウザではログインできません
-                </p>
-                <p style={{ margin: '0 0 10px', fontSize: 12.5, color: '#7a5f00', lineHeight: 1.6 }}>
-                  LINE・Instagram などのアプリ内ブラウザでは Google 認証がブロックされます。
-                  URLをコピーして <strong>Safari または Chrome</strong> で開いてください。
-                </p>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <input
-                    id="ls-url-field"
-                    readOnly
-                    value={url}
-                    style={{
-                      flex: 1, fontSize: 11, padding: '6px 8px', borderRadius: 7,
-                      border: '1px solid #e0c060', background: '#fffde7', color: '#5a4400',
-                      fontFamily: 'monospace', minWidth: 0,
-                    }}
-                    onFocus={e => e.target.select()}
-                  />
-                  <button onClick={handleCopy} style={{
-                    flexShrink: 0, padding: '7px 12px', borderRadius: 8, border: 'none',
-                    background: copied ? '#4caf50' : '#f6c90e', color: copied ? '#fff' : '#5a4400',
-                    fontSize: 12, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
-                    whiteSpace: 'nowrap',
-                  }}>
-                    {copied ? 'コピー済み ✓' : 'URLをコピー'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : (
-            /* 通常ログインボタン */
-            <>
-              <button
-                onClick={async () => {
-                  setError(null);
-                  const { error: err } = await signInWithGoogle();
-                  if (err) setError(err.message);
-                }}
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-                  padding: '12px 20px', borderRadius: 12, border: 'none', cursor: 'pointer',
-                  background: 'var(--accent)', color: '#fff',
-                  fontSize: 15, fontWeight: 700, fontFamily: 'inherit',
-                }}
-              >
-                <GoogleIcon /> Google でログイン
-              </button>
-              {error && (
-                <p style={{ margin: 0, fontSize: 12, color: '#c53030', padding: '6px 10px', background: '#fff5f5', borderRadius: 8 }}>
-                  エラー：{error}
-                </p>
-              )}
-            </>
-          )}
-        </div>
-
-      </div>
-    </div>
-  );
-}
-
-function GoogleIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-      <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
-      <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
-      <path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
-      <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
-    </svg>
   );
 }
 
@@ -1508,11 +1305,6 @@ function pageFromHash() {
 }
 
 export default function Home() {
-  const { user } = useCloudSync();
-
-  // 未ログイン時はログイン画面のみ表示
-  if (!user) return <LoginScreen />;
-
   return <AuthedApp />;
 }
 

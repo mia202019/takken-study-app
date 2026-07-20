@@ -130,6 +130,38 @@ export const TEXTBOOK_CATALOG = [
     ],
   },
 
+  // ── 直前予想問題集 ─────────────────────────────────────────────────
+  {
+    id: 'cat-tac-chokuzen-2026',
+    title: '【直前模試】2026年度版 みんなが欲しかった！宅建士の直前予想問題集',
+    shortTitle: '【直前模試】直前予想問題集',
+    publisher: 'TAC出版',
+    type: 'workbook',
+    status: 'using',
+    description: '本試験形式の予想問題3回分。時間を計って解くことで本番の時間感覚を養う。P4（模試演習）・P5（最終復習）で使用。9月ごろ発売予定。',
+    units: [
+      // 予想問題 第1回（本番形式・全50問）
+      { chapterTitle: '予想問題 第1回 宅建業法（問26〜45）',   subjectId: 'gyo',   estimatedMinutes: 40, keywords: ['予想問題', '第1回', '宅建業法'] },
+      { chapterTitle: '予想問題 第1回 権利関係（問1〜14）',    subjectId: 'kenri', estimatedMinutes: 35, keywords: ['予想問題', '第1回', '権利関係'] },
+      { chapterTitle: '予想問題 第1回 法令上の制限（問15〜22）', subjectId: 'horei', estimatedMinutes: 25, keywords: ['予想問題', '第1回', '法令'] },
+      { chapterTitle: '予想問題 第1回 税・その他（問23〜25・46〜50）', subjectId: 'zei', estimatedMinutes: 20, keywords: ['予想問題', '第1回', '税'] },
+      // 予想問題 第2回
+      { chapterTitle: '予想問題 第2回 宅建業法（問26〜45）',   subjectId: 'gyo',   estimatedMinutes: 40, keywords: ['予想問題', '第2回', '宅建業法'] },
+      { chapterTitle: '予想問題 第2回 権利関係（問1〜14）',    subjectId: 'kenri', estimatedMinutes: 35, keywords: ['予想問題', '第2回', '権利関係'] },
+      { chapterTitle: '予想問題 第2回 法令上の制限（問15〜22）', subjectId: 'horei', estimatedMinutes: 25, keywords: ['予想問題', '第2回', '法令'] },
+      { chapterTitle: '予想問題 第2回 税・その他（問23〜25・46〜50）', subjectId: 'zei', estimatedMinutes: 20, keywords: ['予想問題', '第2回', '税'] },
+      // 予想問題 第3回
+      { chapterTitle: '予想問題 第3回 宅建業法（問26〜45）',   subjectId: 'gyo',   estimatedMinutes: 40, keywords: ['予想問題', '第3回', '宅建業法'] },
+      { chapterTitle: '予想問題 第3回 権利関係（問1〜14）',    subjectId: 'kenri', estimatedMinutes: 35, keywords: ['予想問題', '第3回', '権利関係'] },
+      { chapterTitle: '予想問題 第3回 法令上の制限（問15〜22）', subjectId: 'horei', estimatedMinutes: 25, keywords: ['予想問題', '第3回', '法令'] },
+      { chapterTitle: '予想問題 第3回 税・その他（問23〜25・46〜50）', subjectId: 'zei', estimatedMinutes: 20, keywords: ['予想問題', '第3回', '税'] },
+      // 解き直し・弱点復習
+      { chapterTitle: '第1回 解き直し・弱点チェック', subjectId: 'gyo',   estimatedMinutes: 60, keywords: ['解き直し', '第1回'] },
+      { chapterTitle: '第2回 解き直し・弱点チェック', subjectId: 'kenri', estimatedMinutes: 60, keywords: ['解き直し', '第2回'] },
+      { chapterTitle: '第3回 解き直し・弱点チェック', subjectId: 'horei', estimatedMinutes: 60, keywords: ['解き直し', '第3回'] },
+    ],
+  },
+
   // ── ゆーき大学（YouTube）─────────────────────────────────────────
   {
     id: 'cat-yuuki-youtube',

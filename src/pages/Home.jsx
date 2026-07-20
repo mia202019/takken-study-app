@@ -217,10 +217,28 @@ function useTasks() {
     return () => window.removeEventListener('storage', handler);
   }, []);
 
-  // 表示順: 持ち越し → 通常 → 手動追加
+  // 章番号をタイトルから抽出（例: "新規学習：宅建業法 / 02 免許" → 2）
+  const chapterOrder = (task) => {
+    const m = task.title.match(/[\s　]0*(\d+)[\s　]/);
+    if (m) return parseInt(m[1], 10);
+    // topicやchapterTitleから抽出
+    const t2 = (task.topic || task.chapterTitle || '').match(/^0*(\d+)/);
+    if (t2) return parseInt(t2[1], 10);
+    return 999;
+  };
+
+  // タイプ優先度: 新規学習→問題演習→復習→その他
+  const typeOrder = (type) => ({ study: 0, drill: 1, review: 2 }[type] ?? 3);
+
+  // 表示順: 持ち越し → 通常（章番号順・タイプ順） → 手動追加
   const tasks = useMemo(() => {
-    const carried = meta.todayTasks.filter(t => t.carriedOver);
-    const regular = meta.todayTasks.filter(t => !t.carriedOver);
+    const sortFn = (a, b) => {
+      const chA = chapterOrder(a), chB = chapterOrder(b);
+      if (chA !== chB) return chA - chB;
+      return typeOrder(a.type) - typeOrder(b.type);
+    };
+    const carried = meta.todayTasks.filter(t => t.carriedOver).sort(sortFn);
+    const regular = meta.todayTasks.filter(t => !t.carriedOver).sort(sortFn);
     return [
       ...carried.map(t => ({ ...t, done: !!doneMap[t.id] })),
       ...regular.map(t => ({ ...t, done: !!doneMap[t.id] })),
@@ -242,7 +260,14 @@ function useTasks() {
     setExtraTasks(prev => [...prev, task]);
   }, []);
 
-  return { tasks, toggle, addTask, hasSchedule: meta.hasSchedule, nextDate: meta.nextDate };
+  const deleteTask = useCallback((id) => {
+    const all = loadScheduledTasks().filter(t => t.id !== id);
+    localStorage.setItem(LS_SCHEDULED_KEY, JSON.stringify(all));
+    window.dispatchEvent(new StorageEvent('storage', { key: LS_SCHEDULED_KEY }));
+    setMeta(loadTodayAndMeta());
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  return { tasks, toggle, addTask, deleteTask, hasSchedule: meta.hasSchedule, nextDate: meta.nextDate };
 }
 
 // ── Coach bubble ──────────────────────────────────────────────────
@@ -494,11 +519,13 @@ function ImportantTasks() {
 
 // ── Today's study ─────────────────────────────────────────────────
 
-function TaskRow({ task, onToggle, matLinks = [], onNav }) {
+function TaskRow({ task, onToggle, matLinks = [], onNav, onDelete }) {
+  const [showDelete, setShowDelete] = useState(false);
   return (
-    <div style={{
-      display: 'flex', alignItems: 'flex-start', gap: 12, padding: '13px 0',
-    }}>
+    <div
+      style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '13px 0' }}
+      onLongPress={() => setShowDelete(true)}
+    >
       <button
         aria-label={task.done ? '完了済み' : '完了する'}
         onClick={() => onToggle(task.id)}
@@ -529,6 +556,20 @@ function TaskRow({ task, onToggle, matLinks = [], onNav }) {
           <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--ink-1)', textDecoration: task.done ? 'line-through' : 'none' }}>
             {task.title}
           </span>
+          {onDelete && (
+            <button
+              onClick={e => { e.stopPropagation(); if (window.confirm('このタスクを削除しますか？')) onDelete(task.id); }}
+              style={{
+                marginLeft: 2, width: 20, height: 20, borderRadius: 10,
+                border: 'none', background: 'var(--chip-neutral-bg)', color: 'var(--ink-4)',
+                cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, lineHeight: 1,
+                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0,
+              }}
+              aria-label="タスクを削除"
+              title="このタスクを削除"
+            >×</button>
+          )}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 5, flexWrap: 'wrap' }}>
           <TypeBadge type={task.type} />
@@ -582,7 +623,7 @@ function StatChip({ label, value, accent }) {
   );
 }
 
-function TodayStudy({ tasks, onToggle, onGoSettings, onGoMaterial, hasSchedule, nextDate, onNav }) {
+function TodayStudy({ tasks, onToggle, onDelete, onGoSettings, onGoMaterial, hasSchedule, nextDate, onNav }) {
   const done = tasks.filter(t => t.done).length;
   const remaining = tasks.filter(t => !t.done).reduce((a, t) => a + t.min, 0);
   const carryTasks = tasks.filter(t => t.carriedOver);
@@ -824,7 +865,7 @@ function TodayStudy({ tasks, onToggle, onGoSettings, onGoMaterial, hasSchedule, 
             <div>
               {carryTasks.map((t, i) => (
                 <div key={t.id} style={{ borderTop: i ? '1px solid var(--line)' : 'none' }}>
-                  <TaskRow task={t} onToggle={onToggle} matLinks={matLinksMap[t.id] || []} onNav={onNav} />
+                  <TaskRow task={t} onToggle={onToggle} onDelete={onDelete} matLinks={matLinksMap[t.id] || []} onNav={onNav} />
                 </div>
               ))}
             </div>
@@ -1373,7 +1414,7 @@ export default function Home() {
 }
 
 function AuthedApp() {
-  const { tasks, toggle, addTask, hasSchedule, nextDate } = useTasks();
+  const { tasks, toggle, addTask, deleteTask, hasSchedule, nextDate } = useTasks();
   const [active, setActive] = useState(pageFromHash);
   const [sheet, setSheet] = useState(null);
   const [more, setMore] = useState(false);
@@ -1478,7 +1519,7 @@ function AuthedApp() {
   // Mobile layout: TodayStudy first, then rest
   const mobileHomeContent = (
     <>
-      <TodayStudy tasks={tasks} onToggle={toggle} onGoSettings={() => setActive('settings')} onGoMaterial={() => setActive('material')} hasSchedule={hasSchedule} nextDate={nextDate} onNav={setActive} />
+      <TodayStudy tasks={tasks} onToggle={toggle} onDelete={deleteTask} onGoSettings={() => setActive('settings')} onGoMaterial={() => setActive('material')} hasSchedule={hasSchedule} nextDate={nextDate} onNav={setActive} />
       <Countdown desktop={false} />
       <ImportantTasks />
       <QuickAdd onOpen={handleOpenQuick} desktop={false} />
@@ -1490,7 +1531,7 @@ function AuthedApp() {
   const tabletHomeContent = (
     <>
       <Countdown desktop />
-      <TodayStudy tasks={tasks} onToggle={toggle} onGoSettings={() => setActive('settings')} onGoMaterial={() => setActive('material')} hasSchedule={hasSchedule} nextDate={nextDate} onNav={setActive} />
+      <TodayStudy tasks={tasks} onToggle={toggle} onDelete={deleteTask} onGoSettings={() => setActive('settings')} onGoMaterial={() => setActive('material')} hasSchedule={hasSchedule} nextDate={nextDate} onNav={setActive} />
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, alignItems: 'start' }}>
         <ImportantTasks />
         <StatusSummary remainingMin={remainingMin} />
@@ -1505,7 +1546,7 @@ function AuthedApp() {
       <Countdown desktop />
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: 24, alignItems: 'start' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <TodayStudy tasks={tasks} onToggle={toggle} onGoSettings={() => setActive('settings')} onGoMaterial={() => setActive('material')} hasSchedule={hasSchedule} nextDate={nextDate} onNav={setActive} />
+          <TodayStudy tasks={tasks} onToggle={toggle} onDelete={deleteTask} onGoSettings={() => setActive('settings')} onGoMaterial={() => setActive('material')} hasSchedule={hasSchedule} nextDate={nextDate} onNav={setActive} />
           <QuickAdd onOpen={handleOpenQuick} desktop />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>

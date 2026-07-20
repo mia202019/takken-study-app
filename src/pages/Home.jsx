@@ -327,14 +327,47 @@ function CoachBubble({ tasks, hasSchedule, hasMaterials, desktop }) {
   );
 }
 
+// ── Apply status (localStorage) ───────────────────────────────────
+
+const LS_APPLY_STATUS_KEY = 'takken-apply-status';
+
+function loadApplyStatus() {
+  try {
+    const s = localStorage.getItem(LS_APPLY_STATUS_KEY);
+    return s ? JSON.parse(s) : null;
+  } catch { return null; }
+}
+
+function saveApplyStatus(status, date) {
+  localStorage.setItem(LS_APPLY_STATUS_KEY, JSON.stringify({ status, date }));
+}
+
 // ── Countdown ─────────────────────────────────────────────────────
 
 function Countdown({ desktop }) {
   const days = daysBetween(TODAY, EXAM.date);
+  const [applyStatus, setApplyStatus] = useState(loadApplyStatus);
+
+  const statusLabel = applyStatus
+    ? `申込済み（${applyStatus.date}）`
+    : '受付前';
+  const isDone = !!applyStatus;
+
+  const handleApply = () => {
+    if (isDone) {
+      if (!window.confirm('申込済みの記録を取り消しますか？')) return;
+      localStorage.removeItem(LS_APPLY_STATUS_KEY);
+      setApplyStatus(null);
+    } else {
+      const today = `${TODAY.getMonth() + 1}/${TODAY.getDate()}`;
+      saveApplyStatus('申込済み', today);
+      setApplyStatus({ status: '申込済み', date: today });
+    }
+  };
+
   const stats = [
     { k: '現在フェーズ', v: EXAM.phase },
     { k: '今週の目標', v: EXAM.weeklyGoalH + '時間' },
-    { k: '申込ステータス', v: EXAM.applyStatus, warn: true },
   ];
   return (
     <div style={{
@@ -362,18 +395,37 @@ function Countdown({ desktop }) {
         flex: 1, minWidth: desktop ? 'auto' : '100%',
         display: 'flex', gap: desktop ? 26 : 0,
         justifyContent: desktop ? 'flex-end' : 'space-between',
+        alignItems: 'flex-end',
         borderTop: desktop ? 'none' : '1px solid var(--band-line)',
         paddingTop: desktop ? 0 : 10, marginTop: desktop ? 0 : 2,
       }}>
         {stats.map(s => (
           <div key={s.k} style={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: desktop ? 'flex-end' : 'flex-start' }}>
             <span style={{ fontSize: 11, color: 'var(--band-soft)', letterSpacing: '.03em' }}>{s.k}</span>
-            <span style={{ fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-              {s.warn && <span style={{ width: 7, height: 7, borderRadius: 7, background: 'var(--warn)' }} />}
-              {s.v}
-            </span>
+            <span style={{ fontSize: 13, fontWeight: 600 }}>{s.v}</span>
           </div>
         ))}
+        {/* 申込ステータス */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 3, alignItems: desktop ? 'flex-end' : 'flex-start' }}>
+          <span style={{ fontSize: 11, color: 'var(--band-soft)', letterSpacing: '.03em' }}>申込ステータス</span>
+          <button
+            onClick={handleApply}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 5,
+              padding: '3px 10px', borderRadius: 20,
+              border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+              fontSize: 12, fontWeight: 700,
+              background: isDone ? 'rgba(45,107,77,0.18)' : 'rgba(165,85,21,0.18)',
+              color: isDone ? '#2d6b4d' : 'var(--warn)',
+              transition: 'all .15s',
+            }}
+          >
+            {isDone
+              ? <><Icon name="check" size={12} stroke={2.5} /> {statusLabel}</>
+              : <><span style={{ width: 7, height: 7, borderRadius: 7, background: 'var(--warn)', display: 'inline-block' }} /> {statusLabel} →</>
+            }
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -442,14 +494,14 @@ function ImportantTasks() {
 
 // ── Today's study ─────────────────────────────────────────────────
 
-function TaskRow({ task, onToggle, matLinks = [] }) {
+function TaskRow({ task, onToggle, matLinks = [], onNav }) {
   return (
-    <div onClick={() => onToggle(task.id)} style={{
-      display: 'flex', alignItems: 'flex-start', gap: 12, padding: '13px 0', cursor: 'pointer',
+    <div style={{
+      display: 'flex', alignItems: 'flex-start', gap: 12, padding: '13px 0',
     }}>
       <button
         aria-label={task.done ? '完了済み' : '完了する'}
-        onClick={e => { e.stopPropagation(); onToggle(task.id); }}
+        onClick={() => onToggle(task.id)}
         style={{
           marginTop: 2, width: 24, height: 24, flexShrink: 0, borderRadius: 7,
           border: 'none', padding: 0, cursor: 'pointer',
@@ -492,12 +544,24 @@ function TaskRow({ task, onToggle, matLinks = [] }) {
             <span style={{ fontSize: 11.5, color: 'var(--ink-3)' }}>{task.topic}</span>
           )}
         </div>
-        {/* 参考教材チップ — 教材選択済みのときのみ表示 */}
-        {matLinks.length > 0 && (
-          <div
-            style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 7 }}
-            onClick={e => e.stopPropagation()}
+        {/* 復習タスク → 復習ページへのリンク */}
+        {task.type === 'review' && onNav && (
+          <button
+            onClick={() => onNav('review')}
+            style={{
+              marginTop: 7, display: 'inline-flex', alignItems: 'center', gap: 4,
+              padding: '3px 10px', borderRadius: 20,
+              border: '1px solid var(--line-strong)', background: 'var(--surface)',
+              cursor: 'pointer', fontFamily: 'inherit',
+              fontSize: 11.5, color: 'var(--accent)', fontWeight: 600,
+            }}
           >
+            <Icon name="review" size={12} stroke={2} /> 復習ページを開く
+          </button>
+        )}
+        {/* 参考教材チップ */}
+        {matLinks.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 7 }}>
             {matLinks.map((x, i) => <MaterialChip key={i} item={x} />)}
           </div>
         )}
@@ -518,7 +582,7 @@ function StatChip({ label, value, accent }) {
   );
 }
 
-function TodayStudy({ tasks, onToggle, onGoSettings, onGoMaterial, hasSchedule, nextDate }) {
+function TodayStudy({ tasks, onToggle, onGoSettings, onGoMaterial, hasSchedule, nextDate, onNav }) {
   const done = tasks.filter(t => t.done).length;
   const remaining = tasks.filter(t => !t.done).reduce((a, t) => a + t.min, 0);
   const carryTasks = tasks.filter(t => t.carriedOver);
@@ -760,7 +824,7 @@ function TodayStudy({ tasks, onToggle, onGoSettings, onGoMaterial, hasSchedule, 
             <div>
               {carryTasks.map((t, i) => (
                 <div key={t.id} style={{ borderTop: i ? '1px solid var(--line)' : 'none' }}>
-                  <TaskRow task={t} onToggle={onToggle} matLinks={matLinksMap[t.id] || []} />
+                  <TaskRow task={t} onToggle={onToggle} matLinks={matLinksMap[t.id] || []} onNav={onNav} />
                 </div>
               ))}
             </div>
@@ -1414,7 +1478,7 @@ function AuthedApp() {
   // Mobile layout: TodayStudy first, then rest
   const mobileHomeContent = (
     <>
-      <TodayStudy tasks={tasks} onToggle={toggle} onGoSettings={() => setActive('settings')} onGoMaterial={() => setActive('material')} hasSchedule={hasSchedule} nextDate={nextDate} />
+      <TodayStudy tasks={tasks} onToggle={toggle} onGoSettings={() => setActive('settings')} onGoMaterial={() => setActive('material')} hasSchedule={hasSchedule} nextDate={nextDate} onNav={setActive} />
       <Countdown desktop={false} />
       <ImportantTasks />
       <QuickAdd onOpen={handleOpenQuick} desktop={false} />
@@ -1426,7 +1490,7 @@ function AuthedApp() {
   const tabletHomeContent = (
     <>
       <Countdown desktop />
-      <TodayStudy tasks={tasks} onToggle={toggle} onGoSettings={() => setActive('settings')} onGoMaterial={() => setActive('material')} hasSchedule={hasSchedule} nextDate={nextDate} />
+      <TodayStudy tasks={tasks} onToggle={toggle} onGoSettings={() => setActive('settings')} onGoMaterial={() => setActive('material')} hasSchedule={hasSchedule} nextDate={nextDate} onNav={setActive} />
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, alignItems: 'start' }}>
         <ImportantTasks />
         <StatusSummary remainingMin={remainingMin} />
@@ -1441,7 +1505,7 @@ function AuthedApp() {
       <Countdown desktop />
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: 24, alignItems: 'start' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <TodayStudy tasks={tasks} onToggle={toggle} onGoSettings={() => setActive('settings')} onGoMaterial={() => setActive('material')} hasSchedule={hasSchedule} nextDate={nextDate} />
+          <TodayStudy tasks={tasks} onToggle={toggle} onGoSettings={() => setActive('settings')} onGoMaterial={() => setActive('material')} hasSchedule={hasSchedule} nextDate={nextDate} onNav={setActive} />
           <QuickAdd onOpen={handleOpenQuick} desktop />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
